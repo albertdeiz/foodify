@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+// Cuenta de usuario. Puede gestionar uno o varios restaurantes.
+//
+// first_name / last_name  — nombre para mostrar en el panel
+// email                   — identificador único de login
+// password                — hash bcrypt, nunca se almacena en plano
+model User {
+  id              Int             @id @default(autoincrement())
+  first_name      String
+  last_name       String
+  email           String          @unique
+  password        String
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  user_workspaces UserWorkspace[]
+}
+
+// ─── Workspace ────────────────────────────────────────────────────────────────
+// Representa un restaurante. Un usuario puede ser miembro de varios.
+//
+// name    — nombre visible del restaurante
+// slug    — identificador único para la URL pública (ej: /burgerpizza-co)
+// address — dirección física, de cara a la ficha pública
+model Workspace {
+  id                       Int                     @id @default(autoincrement())
+  name                     String
+  slug                     String                  @unique
+  address                  String
+  created_at               DateTime                @default(now())
+  updated_at               DateTime                @updatedAt
+  user_workspaces          UserWorkspace[]
+  categories               Category[]
+  products                 Product[]
+  product_complement_types ProductComplementType[]
+  menus                    Menu[]
+}
+
+// ─── UserWorkspace ────────────────────────────────────────────────────────────
+// Tabla de unión entre usuarios y restaurantes.
+// Diseñada para soportar roles futuros (owner, staff, viewer…)
+// sin cambiar la estructura de User ni de Workspace.
+model UserWorkspace {
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  user         User      @relation(fields: [user_id], references: [id])
+  user_id      Int
+  workspace    Workspace @relation(fields: [workspace_id], references: [id])
+  workspace_id Int
+
+  @@id([user_id, workspace_id])
+}
+
+// ─── Category ─────────────────────────────────────────────────────────────────
+// Agrupa productos dentro de un restaurante.
+// Una misma categoría puede aparecer en varias cartas (Menu).
+// Un producto puede pertenecer a varias categorías.
+//
+// order — posición dentro del restaurante; el orden dentro de una carta
+//         se gestiona en MenuCategory.order
+model Category {
+  id                 Int               @id @default(autoincrement())
+  name               String
+  order              Int               @default(0)
+  workspace          Workspace         @relation(fields: [workspace_id], references: [id])
+  workspace_id       Int
+  product_categories ProductCategory[]
+  menu_categories    MenuCategory[]
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────────────────
+// Una carta es una selección ordenada de categorías (y sus productos).
+// Un restaurante puede tener varias cartas activas simultáneamente.
+// El QR de mesa apunta al listado de cartas activas del restaurante.
+//
+// is_active — controla visibilidad pública sin borrar la carta
+model Menu {
+  id                  Int                @id @default(autoincrement())
+  name                String
+  is_active           Boolean            @default(true)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  workspace           Workspace          @relation(fields: [workspace_id], references: [id])
+  workspace_id        Int
+  menu_categories     MenuCategory[]
+  menu_product_prices MenuProductPrice[]
+}
+
+// ─── MenuCategory ─────────────────────────────────────────────────────────────
+// Qué categorías aparecen en qué carta y en qué orden.
+// La misma categoría puede tener órdenes distintos en distintas cartas.
+model MenuCategory {
+  menu        Menu     @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+  menu_id     Int
+  category    Category @relation(fields: [category_id], references: [id])
+  category_id Int
+  order       Int      @default(0)
+
+  @@id([menu_id, category_id])
+}
+
+// ─── Product ──────────────────────────────────────────────────────────────────
+// Unidad del catálogo de un restaurante. Existen tres tipos:
+//
+//   REGULAR      — producto simple, sin personalización (Agua, Café…)
+//   COMPLEMENTED — tiene opciones de personalización (Hamburguesa, Pizza…)
+//   COMBO        — está compuesto por otros productos (Combo Big Burger…)
+//
+// price       — precio base en céntimos (ej: 899 = 8.99€). Nunca decimales.
+// content     — información de cantidad o peso visible al cliente ("280g", "6 uds")
+// is_available — permite ocultar el producto sin borrarlo (stock, temporada…)
+// type        — declara la intención del producto para guiar la UI del admin.
+//               Es derivable de las relaciones, pero evita ambigüedad en
+//               productos recién creados sin relaciones aún configuradas.
+model Product {
+  id                               Int                            @id @default(autoincrement())
+  name                             String
+  description                      String
+  price                            Int
+  image_url                        String?
+  type                             String                         @default("REGULAR") // REGULAR | COMPLEMENTED | COMBO
+  is_available                     Boolean                        @default(true)
+  content                          String?
+  created_at                       DateTime                       @default(now())
+  updated_at                       DateTime                       @updatedAt
+  workspace                        Workspace                      @relation(fields: [workspace_id], references: [id])
+  workspace_id                     Int
+  // Categorías en las que aparece este producto
+  product_categories               ProductCategory[]
+  // Tipos de complemento asignados a este producto (solo para COMPLEMENTED)
+  product_product_complement_types ProductProductComplementType[]
+  // Precios especiales en cartas concretas
+  menu_product_prices              MenuProductPrice[]
+  // Si este producto es un COMBO, aquí están sus slots de componentes
+  combo_items                      ComboItem[]                    @relation("ComboItems")
+  // Si este producto aparece como componente fijo en algún combo
+  combo_item_references            ComboItem[]                    @relation("ComboItemProduct")
+  // Si este producto es una opción seleccionable en un slot flexible de combo
+  complement_links                 ProductComplement[]            @relation("ComplementLinkedProduct")
+}
+
+// ─── ProductCategory ──────────────────────────────────────────────────────────
+// Un producto puede estar en varias categorías (ej: Big Burger en Hamburguesas
+// y también en Menú del Día). Cada asignación tiene su propio orden.
+model ProductCategory {
+  product     Product  @relation(fields: [product_id], references: [id])
+  product_id  Int
+  category    Category @relation(fields: [category_id], references: [id])
+  category_id Int
+  order       Int      @default(0)
+
+  @@id([product_id, category_id])
+}
+
+// ─── MenuProductPrice ─────────────────────────────────────────────────────────
+// Precio especial de un producto en una carta concreta.
+// Permite que la Big Burger cueste 8.99€ en la carta principal
+// pero 7.49€ en el Menú del Día, sin duplicar el producto.
+// Si no existe registro, se usa el precio base del producto.
+model MenuProductPrice {
+  menu       Menu    @relation(fields: [menu_id], references: [id], onDelete: Cascade)
+  menu_id    Int
+  product    Product @relation(fields: [product_id], references: [id])
+  product_id Int
+  price      Int
+
+  @@id([menu_id, product_id])
+}
+
+// ─── ComboItem ────────────────────────────────────────────────────────────────
+// Cada registro es un slot (componente) de un combo.
+// Reemplaza el antiguo modelo de "producto hijo con parent_product_id",
+// que creaba productos placeholder en lugar de referenciar productos reales.
+//
+// Existen dos tipos de slot:
+//
+//   Slot fijo      — product_id definido. El componente es siempre ese producto.
+//                    El cliente puede personalizarlo con sus propios complementos.
+//                    Ej: "Nuggets (9 uds)" siempre incluidos en Combo Nuggets.
+//
+//   Slot flexible  — product_id null, complement_type_id definido.
+//                    El cliente elige de una lista de opciones.
+//                    Cada opción en el complement type tiene linked_product_id
+//                    apuntando al producto real, cuyos complementos se heredan.
+//                    Ej: "Elige tu hamburguesa" → Big Burger / Crispy / Veggie.
+//
+// order — posición de este slot en la pantalla de configuración del combo
+model ComboItem {
+  id                 Int                    @id @default(autoincrement())
+  order              Int                    @default(0)
+  combo_product_id   Int
+  combo_product      Product                @relation("ComboItems", fields: [combo_product_id], references: [id])
+  product_id         Int?
+  product            Product?               @relation("ComboItemProduct", fields: [product_id], references: [id])
+  complement_type_id Int?
+  complement_type    ProductComplementType? @relation(fields: [complement_type_id], references: [id])
+}
+
+// ─── ProductComplementType ────────────────────────────────────────────────────
+// Grupo de opciones de personalización definido a nivel de restaurante.
+// Se reutiliza entre productos: "Salsas" se asigna a hamburguesas, pizzas
+// y acompañamientos sin duplicar la configuración.
+//
+// required       — el cliente DEBE elegir al menos una opción antes de continuar
+// min_selectable — mínimo de opciones que el cliente debe seleccionar (0 = ninguno)
+// max_selectable — máximo de opciones simultáneas (1 = elección única, >1 = múltiple)
+//
+// Ejemplo "Tipo de carne":  required: true,  min: 1, max: 1  → elige exactamente 1
+// Ejemplo "Extras":         required: false, min: 0, max: 5  → hasta 5 opcionales
+// Ejemplo "Salsas":         required: false, min: 0, max: 3  → hasta 3 opcionales
+model ProductComplementType {
+  id                               Int                            @id @default(autoincrement())
+  name                             String
+  required                         Boolean                        @default(false)
+  min_selectable                   Int                            @default(0)
+  max_selectable                   Int                            @default(1)
+  created_at                       DateTime                       @default(now())
+  updated_at                       DateTime                       @updatedAt
+  workspace                        Workspace                      @relation(fields: [workspace_id], references: [id])
+  workspace_id                     Int
+  product_complements              ProductComplement[]
+  product_product_complement_types ProductProductComplementType[]
+  combo_items                      ComboItem[]
+}
+
+// ─── ProductProductComplementType ─────────────────────────────────────────────
+// Qué tipos de complemento están activos en cada producto.
+// Un mismo tipo (ej: "Salsas") puede asignarse a múltiples productos.
+// Eliminar este registro desactiva la opción para ese producto sin borrar
+// el tipo ni sus opciones del restaurante.
+model ProductProductComplementType {
+  product                    Product               @relation(fields: [product_id], references: [id])
+  product_id                 Int
+  product_complement_type    ProductComplementType @relation(fields: [product_complement_type_id], references: [id])
+  product_complement_type_id Int
+
+  @@id([product_id, product_complement_type_id])
+}
+
+// ─── ProductComplement ────────────────────────────────────────────────────────
+// Una opción concreta dentro de un tipo de complemento.
+// Ej: dentro de "Tipo de carne" → Vacuno, Pollo, Vegetal, Doble Vacuno.
+//
+// price             — ajuste de precio en céntimos al elegir esta opción.
+//                     Puede ser positivo (+150 = suma 1.50€),
+//                     negativo (-50 = descuenta 0.50€) o cero.
+// increment         — true si el precio se suma al total del producto.
+//                     false si el precio reemplaza o no afecta al total.
+//                     Usado principalmente para tamaños y selecciones base.
+// is_disabled       — oculta la opción sin borrarla (temporada, stock…)
+//
+// linked_product_id — clave del diseño para combos flexibles.
+//                     Si esta opción representa un producto real del catálogo,
+//                     este campo apunta a él. Al seleccionar la opción en un
+//                     slot flexible de combo, el sistema carga los complementos
+//                     de ese producto para que el cliente también lo personalice.
+//                     Ej: opción "Big Burger" en "Elige tu hamburguesa" apunta
+//                     al producto Big Burger → el cliente elige carne, extras, salsas.
+model ProductComplement {
+  id                         Int                   @id @default(autoincrement())
+  name                       String
+  price                      Int                   @default(0)
+  increment                  Boolean               @default(false)
+  is_disabled                Boolean               @default(false)
+  product_complement_type    ProductComplementType @relation(fields: [product_complement_type_id], references: [id])
+  product_complement_type_id Int
+  linked_product_id          Int?
+  linked_product             Product?              @relation("ComplementLinkedProduct", fields: [linked_product_id], references: [id])
+  created_at                 DateTime              @default(now())
+  updated_at                 DateTime              @updatedAt
+}

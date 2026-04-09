@@ -1,4 +1,4 @@
-import type { ComplementType, ProductComplement } from './complement-type.entity'
+import type { ComplementType } from './complement-type.entity'
 
 export type ProductType = 'REGULAR' | 'COMPLEMENTED' | 'COMBO'
 
@@ -22,8 +22,6 @@ export interface ComboItem {
   combo_product_id: number
   product_id: number | null
   product: Product | null
-  complement_type_id: number | null
-  complement_type: (ComplementType & { product_complements: ProductComplement[] }) | null
 }
 
 export interface ProductWithDetails extends Product {
@@ -43,7 +41,6 @@ export type UpdateProductInput = Partial<
 
 export type CreateComboItemInput = {
   product_id?: number | null
-  complement_type_id?: number | null
   order?: number
 }
 

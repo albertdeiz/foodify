@@ -104,14 +104,6 @@ export async function publicRoutes(app: FastifyInstance) {
           orderBy: { order: 'asc' },
           include: {
             product: true,
-            complement_type: {
-              include: {
-                product_complements: {
-                  where: { is_disabled: false },
-                  orderBy: { id: 'asc' },
-                },
-              },
-            },
           },
         },
       },

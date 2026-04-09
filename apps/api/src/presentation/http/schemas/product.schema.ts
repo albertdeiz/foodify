@@ -15,7 +15,6 @@ export const updateProductSchema = createProductSchema.partial().extend({
 
 export const createComboItemSchema = z.object({
   product_id: z.number().int().nullable().optional(),
-  complement_type_id: z.number().int().nullable().optional(),
   order: z.number().int().min(0).optional(),
 })
 

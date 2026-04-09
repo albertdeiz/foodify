@@ -325,55 +325,18 @@ async function main() {
   console.log('✅ Opciones de elección de combos creadas')
 
   // ─── ComboItems ────────────────────────────────────────────────────────────
-  // Cada registro es un slot real de un combo. Sustituye al antiguo enfoque
-  // de "productos hijo" con parent_product_id.
-  // Slot fijo:     product_id definido, complement_type_id null
-  // Slot flexible: product_id null, complement_type_id define las opciones
+  // Ahora solo slots FIJOS: product_id siempre definido.
+  // Los slots de elección ("elige tu X") se gestionan como complement types
+  // asignados directamente al producto COMBO.
   await prisma.comboItem.createMany({
     data: [
-      // Combo Big Burger: elige hamburguesa + acompañamiento + bebida
-      { combo_product_id: pComboBigBurger.id, product_id: null, complement_type_id: ctChooseBurger.id, order: 0 },
-      { combo_product_id: pComboBigBurger.id, product_id: null, complement_type_id: ctChooseSide.id,   order: 1 },
-      { combo_product_id: pComboBigBurger.id, product_id: null, complement_type_id: ctChooseDrink.id,  order: 2 },
+      // Combo Nuggets: Nuggets fijos incluidos siempre
+      { combo_product_id: pComboNuggets.id, product_id: pNuggets.id, order: 0 },
 
-      // Combo Pizza Familiar: elige pizza + 2 bebidas + postre
-      { combo_product_id: pComboPizzaFamiliar.id, product_id: null, complement_type_id: ctChoosePizza.id,   order: 0 },
-      { combo_product_id: pComboPizzaFamiliar.id, product_id: null, complement_type_id: ctChooseDrink.id,   order: 1 },
-      { combo_product_id: pComboPizzaFamiliar.id, product_id: null, complement_type_id: ctChooseDrink.id,   order: 2 },
-      { combo_product_id: pComboPizzaFamiliar.id, product_id: null, complement_type_id: ctChooseDessert.id, order: 3 },
-
-      // Combo Nuggets: Nuggets fijos (producto real) + elige acompañamiento + bebida
-      { combo_product_id: pComboNuggets.id, product_id: pNuggets.id, complement_type_id: null,             order: 0 },
-      { combo_product_id: pComboNuggets.id, product_id: null,        complement_type_id: ctChooseSide.id,  order: 1 },
-      { combo_product_id: pComboNuggets.id, product_id: null,        complement_type_id: ctChooseDrink.id, order: 2 },
-
-      // Menú Infantil: elige hamburguesa + acompañamiento + bebida + postre
-      { combo_product_id: pMenuInfantil.id, product_id: null, complement_type_id: ctChooseBurger.id,  order: 0 },
-      { combo_product_id: pMenuInfantil.id, product_id: null, complement_type_id: ctChooseSide.id,    order: 1 },
-      { combo_product_id: pMenuInfantil.id, product_id: null, complement_type_id: ctChooseDrink.id,   order: 2 },
-      { combo_product_id: pMenuInfantil.id, product_id: null, complement_type_id: ctChooseDessert.id, order: 3 },
-
-      // Combo Double Trouble: 2 hamburguesas + 2 acompañamientos + 2 bebidas
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseBurger.id, order: 0 },
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseBurger.id, order: 1 },
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseSide.id,   order: 2 },
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseSide.id,   order: 3 },
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseDrink.id,  order: 4 },
-      { combo_product_id: pComboDoubleTrouble.id, product_id: null, complement_type_id: ctChooseDrink.id,  order: 5 },
-
-      // Pizza + Bebida (promo): elige pizza + bebida
-      { combo_product_id: pPromoPizzaBebida.id, product_id: null, complement_type_id: ctChoosePizza.id,  order: 0 },
-      { combo_product_id: pPromoPizzaBebida.id, product_id: null, complement_type_id: ctChooseDrink.id,  order: 1 },
-
-      // Desayuno Completo: Café + Tostada + Zumo → slots fijos con productos reales
-      { combo_product_id: pFullBreakfast.id, product_id: pCoffee.id,      complement_type_id: null, order: 0 },
-      { combo_product_id: pFullBreakfast.id, product_id: pToast.id,       complement_type_id: null, order: 1 },
-      { combo_product_id: pFullBreakfast.id, product_id: pNaturalJuice.id,complement_type_id: null, order: 2 },
-
-      // Menú Estudiante: elige hamburguesa + acompañamiento + bebida
-      { combo_product_id: pPromoStudents.id, product_id: null, complement_type_id: ctChooseBurger.id, order: 0 },
-      { combo_product_id: pPromoStudents.id, product_id: null, complement_type_id: ctChooseSide.id,   order: 1 },
-      { combo_product_id: pPromoStudents.id, product_id: null, complement_type_id: ctChooseDrink.id,  order: 2 },
+      // Desayuno Completo: slots fijos con productos reales
+      { combo_product_id: pFullBreakfast.id, product_id: pCoffee.id,       order: 0 },
+      { combo_product_id: pFullBreakfast.id, product_id: pToast.id,        order: 1 },
+      { combo_product_id: pFullBreakfast.id, product_id: pNaturalJuice.id, order: 2 },
     ],
   })
 
@@ -404,6 +367,45 @@ async function main() {
       ...[pCola, pSprite, pFanta, pOrangeJuice, pChocMilkshake, pStrawMilkshake].map((p) => ({
         product_id: p.id, product_complement_type_id: ctSize.id,
       })),
+
+      // ── Combos: sus opciones de elección viven aquí ────────────────────────
+
+      // Combo Big Burger → elige hamburguesa + acompañamiento + bebida
+      { product_id: pComboBigBurger.id,      product_complement_type_id: ctChooseBurger.id },
+      { product_id: pComboBigBurger.id,      product_complement_type_id: ctChooseSide.id   },
+      { product_id: pComboBigBurger.id,      product_complement_type_id: ctChooseDrink.id  },
+
+      // Combo Pizza Familiar → elige pizza + 2 bebidas + postre
+      // Nota: max_selectable de ctChooseDrink se asigna una vez; si se necesitan
+      // 2 elecciones independientes considera crear ctChooseDrink2 o usar max_selectable: 2
+      { product_id: pComboPizzaFamiliar.id,  product_complement_type_id: ctChoosePizza.id   },
+      { product_id: pComboPizzaFamiliar.id,  product_complement_type_id: ctChooseDrink.id   },
+      { product_id: pComboPizzaFamiliar.id,  product_complement_type_id: ctChooseDessert.id },
+
+      // Combo Nuggets → elige acompañamiento + bebida (nuggets ya es slot fijo)
+      { product_id: pComboNuggets.id,        product_complement_type_id: ctChooseSide.id  },
+      { product_id: pComboNuggets.id,        product_complement_type_id: ctChooseDrink.id },
+
+      // Menú Infantil → elige hamburguesa + acompañamiento + bebida + postre
+      { product_id: pMenuInfantil.id,        product_complement_type_id: ctChooseBurger.id  },
+      { product_id: pMenuInfantil.id,        product_complement_type_id: ctChooseSide.id    },
+      { product_id: pMenuInfantil.id,        product_complement_type_id: ctChooseDrink.id   },
+      { product_id: pMenuInfantil.id,        product_complement_type_id: ctChooseDessert.id },
+
+      // Combo Double Trouble → elige 2 hamburguesas + 2 acompañamientos + 2 bebidas
+      // Misma nota que arriba: max_selectable: 2 en cada tipo cubre la doble elección
+      { product_id: pComboDoubleTrouble.id,  product_complement_type_id: ctChooseBurger.id },
+      { product_id: pComboDoubleTrouble.id,  product_complement_type_id: ctChooseSide.id   },
+      { product_id: pComboDoubleTrouble.id,  product_complement_type_id: ctChooseDrink.id  },
+
+      // Pizza + Bebida (promo) → elige pizza + bebida
+      { product_id: pPromoPizzaBebida.id,    product_complement_type_id: ctChoosePizza.id },
+      { product_id: pPromoPizzaBebida.id,    product_complement_type_id: ctChooseDrink.id },
+
+      // Menú Estudiante → elige hamburguesa + acompañamiento + bebida
+      { product_id: pPromoStudents.id,       product_complement_type_id: ctChooseBurger.id },
+      { product_id: pPromoStudents.id,       product_complement_type_id: ctChooseSide.id   },
+      { product_id: pPromoStudents.id,       product_complement_type_id: ctChooseDrink.id  },
     ],
   })
 

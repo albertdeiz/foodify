@@ -58,7 +58,7 @@ CREATE TABLE "MenuCategory" (
     "order" INTEGER NOT NULL DEFAULT 0,
 
     PRIMARY KEY ("menu_id", "category_id"),
-    CONSTRAINT "MenuCategory_menu_id_fkey" FOREIGN KEY ("menu_id") REFERENCES "Menu" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "MenuCategory_menu_id_fkey" FOREIGN KEY ("menu_id") REFERENCES "Menu" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "MenuCategory_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "Category" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -75,9 +75,7 @@ CREATE TABLE "Product" (
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
     "workspace_id" INTEGER NOT NULL,
-    "parent_product_id" INTEGER,
-    CONSTRAINT "Product_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "Workspace" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Product_parent_product_id_fkey" FOREIGN KEY ("parent_product_id") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Product_workspace_id_fkey" FOREIGN KEY ("workspace_id") REFERENCES "Workspace" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -98,8 +96,18 @@ CREATE TABLE "MenuProductPrice" (
     "price" INTEGER NOT NULL,
 
     PRIMARY KEY ("menu_id", "product_id"),
-    CONSTRAINT "MenuProductPrice_menu_id_fkey" FOREIGN KEY ("menu_id") REFERENCES "Menu" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "MenuProductPrice_menu_id_fkey" FOREIGN KEY ("menu_id") REFERENCES "Menu" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "MenuProductPrice_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "Product" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "ComboItem" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "combo_product_id" INTEGER NOT NULL,
+    "product_id" INTEGER,
+    CONSTRAINT "ComboItem_combo_product_id_fkey" FOREIGN KEY ("combo_product_id") REFERENCES "Product" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "ComboItem_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -107,6 +115,7 @@ CREATE TABLE "ProductComplementType" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
     "required" BOOLEAN NOT NULL DEFAULT false,
+    "min_selectable" INTEGER NOT NULL DEFAULT 0,
     "max_selectable" INTEGER NOT NULL DEFAULT 1,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
@@ -128,13 +137,15 @@ CREATE TABLE "ProductProductComplementType" (
 CREATE TABLE "ProductComplement" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
+    "price" INTEGER NOT NULL DEFAULT 0,
     "increment" BOOLEAN NOT NULL DEFAULT false,
     "is_disabled" BOOLEAN NOT NULL DEFAULT false,
-    "price" INTEGER NOT NULL DEFAULT 0,
     "product_complement_type_id" INTEGER NOT NULL,
+    "linked_product_id" INTEGER,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL,
-    CONSTRAINT "ProductComplement_product_complement_type_id_fkey" FOREIGN KEY ("product_complement_type_id") REFERENCES "ProductComplementType" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "ProductComplement_product_complement_type_id_fkey" FOREIGN KEY ("product_complement_type_id") REFERENCES "ProductComplementType" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "ProductComplement_linked_product_id_fkey" FOREIGN KEY ("linked_product_id") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateIndex

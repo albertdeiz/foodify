@@ -200,8 +200,6 @@ model ComboItem {
   combo_product      Product                @relation("ComboItems", fields: [combo_product_id], references: [id])
   product_id         Int?
   product            Product?               @relation("ComboItemProduct", fields: [product_id], references: [id])
-  complement_type_id Int?
-  complement_type    ProductComplementType? @relation(fields: [complement_type_id], references: [id])
 }
 
 // ─── ProductComplementType ────────────────────────────────────────────────────
@@ -228,7 +226,6 @@ model ProductComplementType {
   workspace_id                     Int
   product_complements              ProductComplement[]
   product_product_complement_types ProductProductComplementType[]
-  combo_items                      ComboItem[]
 }
 
 // ─── ProductProductComplementType ─────────────────────────────────────────────

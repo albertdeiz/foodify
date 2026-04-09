@@ -12,9 +12,6 @@ import type {
 
 const comboItemInclude = {
   product: true,
-  complement_type: {
-    include: { product_complements: { orderBy: { id: 'asc' as const } } },
-  },
 }
 
 const withDetails = {
@@ -132,7 +129,6 @@ export class PrismaProductRepository implements IProductRepository {
       data: {
         combo_product_id: comboProductId,
         product_id: input.product_id ?? null,
-        complement_type_id: input.complement_type_id ?? null,
         order: input.order ?? 0,
       },
       include: comboItemInclude,

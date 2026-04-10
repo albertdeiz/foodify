@@ -1,28 +1,8 @@
 import { apiClient } from '@/shared/lib/api-client'
 import type { Product, ProductWithDetails, CreateProductInput, ComboItem, CreateComboItemInput, UpdateComboItemInput } from '../types'
-import type { ComplementType, ProductComplement } from '@/features/complement-types/types'
+import { type ApiComplementType, toComplementType, } from '@/features/complement-types/api/complement-types.api'
 
 // ─── Raw API response types ────────────────────────────────────────────────────
-
-interface ApiProductComplement {
-  id: number
-  name: string
-  price: number
-  increment: boolean
-  is_disabled: boolean
-  linked_product_id: number | null
-  product_complement_type_id: number
-}
-
-interface ApiComplementType {
-  id: number
-  name: string
-  required: boolean
-  min_selectable: number
-  max_selectable: number
-  workspace_id: number
-  product_complements: ApiProductComplement[]
-}
 
 interface ApiProduct {
   id: number
@@ -51,30 +31,6 @@ interface ApiProductWithDetails extends ApiProduct {
 }
 
 // ─── Transforms ────────────────────────────────────────────────────────────────
-
-function toProductComplement(r: ApiProductComplement): ProductComplement {
-  return {
-    id: r.id,
-    name: r.name,
-    price: r.price,
-    increment: r.increment,
-    isDisabled: r.is_disabled,
-    linkedProductId: r.linked_product_id,
-    productComplementTypeId: r.product_complement_type_id,
-  }
-}
-
-function toComplementType(r: ApiComplementType): ComplementType {
-  return {
-    id: r.id,
-    name: r.name,
-    required: r.required,
-    minSelectable: r.min_selectable,
-    maxSelectable: r.max_selectable,
-    workspaceId: r.workspace_id,
-    productComplements: r.product_complements.map(toProductComplement),
-  }
-}
 
 function toProduct(r: ApiProduct): Product {
   return {

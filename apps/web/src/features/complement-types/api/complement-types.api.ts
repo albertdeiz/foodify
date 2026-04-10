@@ -3,7 +3,7 @@ import type { ComplementType, ProductComplement, CreateComplementTypeInput, Crea
 
 // ─── Raw API response types ────────────────────────────────────────────────────
 
-interface ApiProductComplement {
+export interface ApiProductComplement {
   id: number
   name: string
   price: number
@@ -13,7 +13,7 @@ interface ApiProductComplement {
   product_complement_type_id: number
 }
 
-interface ApiComplementType {
+export interface ApiComplementType {
   id: number
   name: string
   required: boolean
@@ -25,7 +25,7 @@ interface ApiComplementType {
 
 // ─── Transforms ────────────────────────────────────────────────────────────────
 
-function toProductComplement(r: ApiProductComplement): ProductComplement {
+export function toProductComplement(r: ApiProductComplement): ProductComplement {
   return {
     id: r.id,
     name: r.name,
@@ -37,7 +37,7 @@ function toProductComplement(r: ApiProductComplement): ProductComplement {
   }
 }
 
-function toComplementType(r: ApiComplementType): ComplementType {
+export function toComplementType(r: ApiComplementType): ComplementType {
   return {
     id: r.id,
     name: r.name,

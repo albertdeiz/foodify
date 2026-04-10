@@ -11,7 +11,6 @@ import type {
   PublicMenuProduct,
   PublicProductDetail,
   PublicComplementType,
-  PublicComboItem,
   CartItem,
   CartComplement,
   CartComboSlot,
@@ -117,73 +116,17 @@ function ComplementSection({
 
 // ─── Combo Slot Section ───────────────────────────────────────────────────────
 
-function ComboSlotSection({
-  slot,
-  selected,
-  onChange,
-}: {
-  slot: PublicComboItem
-  selected: CartSelectedOption | undefined
-  onChange: (option: CartSelectedOption | undefined) => void
-}) {
-  if (slot.product) {
-    return (
-      <div className="flex items-center justify-between rounded-lg border px-3 py-2.5 bg-muted/30">
-        <div>
-          <p className="text-xs text-muted-foreground mb-0.5">Incluido</p>
-          <p className="text-sm font-medium">{slot.product.name}</p>
-        </div>
-        <Badge variant="outline" className="text-xs">Fijo</Badge>
-      </div>
-    )
-  }
-
-  if (slot.complement_type) {
-    const ct = slot.complement_type
-    const selectedId = selected?.id
-    return (
+function ComboSlotSection({ slot }: { slot: { product: { name: string } | null } }) {
+  if (!slot.product) return null
+  return (
+    <div className="flex items-center justify-between rounded-lg border px-3 py-2.5 bg-muted/30">
       <div>
-        <p className="text-sm font-semibold mb-2">
-          {ct.name}
-          <span className={cn('ml-2 text-xs font-normal', !selected ? 'text-destructive' : 'text-green-600')}>
-            {!selected ? '— Elige una opción' : '✓'}
-          </span>
-        </p>
-        <div className="flex flex-col gap-1">
-          {ct.product_complements.map((opt) => {
-            const checked = selectedId === opt.id
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => onChange(checked ? undefined : { id: opt.id, name: opt.name, price: opt.price, increment: opt.increment })}
-                className={cn(
-                  'flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors',
-                  checked && 'border-primary bg-primary/5',
-                  !checked && 'hover:bg-muted/50',
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      'h-4 w-4 rounded-full border-2 shrink-0',
-                      checked ? 'border-primary bg-primary' : 'border-muted-foreground',
-                    )}
-                  />
-                  <span className="text-sm">{opt.name}</span>
-                </div>
-                {opt.price !== 0 && (
-                  <span className="text-xs text-muted-foreground tabular-nums">{fmtAdj(opt.price)}</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        <p className="text-xs text-muted-foreground mb-0.5">Incluido</p>
+        <p className="text-sm font-medium">{slot.product.name}</p>
       </div>
-    )
-  }
-
-  return null
+      <Badge variant="outline" className="text-xs">Fijo</Badge>
+    </div>
+  )
 }
 
 // ─── Sheet Content ────────────────────────────────────────────────────────────
@@ -206,15 +149,11 @@ function SheetContent({
     Object.fromEntries(product.complement_types.map((ct) => [ct.id, []]))
   )
 
-  // Combo slot selections: slotId → CartSelectedOption | undefined
-  const [comboSelections, setComboSelections] = useState<Record<number, CartSelectedOption | undefined>>({})
-
   const [quantity, setQuantity] = useState(1)
 
   // Reset when product changes
   useEffect(() => {
     setComplementSelections(Object.fromEntries(product.complement_types.map((ct) => [ct.id, []])))
-    setComboSelections({})
     setQuantity(1)
   }, [product.id])
 
@@ -245,9 +184,7 @@ function SheetContent({
     const count = (complementSelections[ct.id] ?? []).length
     return count < (ct.min_selectable || 1)
   })
-  const flexibleSlots = product.combo_items.filter((s) => s.complement_type)
-  const comboErrors = flexibleSlots.filter((s) => !comboSelections[s.id])
-  const isValid = requiredErrors.length === 0 && comboErrors.length === 0
+  const isValid = requiredErrors.length === 0
 
   function handleAdd() {
     const cartComplements: CartComplement[] = product.complement_types.map((ct) => ({
@@ -263,9 +200,6 @@ function SheetContent({
       slotId: slot.id,
       order: slot.order,
       fixedProduct: slot.product ? { id: slot.product.id, name: slot.product.name } : undefined,
-      complementTypeId: slot.complement_type?.id,
-      complementTypeName: slot.complement_type?.name,
-      selectedOption: comboSelections[slot.id],
     }))
 
     addItem({
@@ -338,10 +272,6 @@ function SheetContent({
               <ComboSlotSection
                 key={slot.id}
                 slot={slot}
-                selected={comboSelections[slot.id]}
-                onChange={(opt) =>
-                  setComboSelections((prev) => ({ ...prev, [slot.id]: opt }))
-                }
               />
             ))}
           </div>

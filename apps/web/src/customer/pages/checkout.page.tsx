@@ -16,7 +16,7 @@ function ItemSummary({ item }: { item: CartItem }) {
   const totalPrice = computeItemTotal(item)
 
   const activeComplements = item.complements.filter((c) => c.selectedOptions.length > 0)
-  const comboSlots = item.comboSlots.filter((s) => s.fixedProduct || s.selectedOption)
+  const comboSlots = item.comboSlots.filter((s) => s.fixedProduct)
 
   return (
     <div className="py-4 flex flex-col gap-3">
@@ -42,14 +42,7 @@ function ItemSummary({ item }: { item: CartItem }) {
           {/* Combo slot lines */}
           {comboSlots.map((s) => (
             <p key={s.slotId} className="text-xs text-muted-foreground mt-1">
-              {s.fixedProduct ? (
-                <span>Incluido: {s.fixedProduct.name}</span>
-              ) : (
-                <span>
-                  <span className="font-medium">{s.complementTypeName}:</span>{' '}
-                  {s.selectedOption?.name}
-                </span>
-              )}
+              Incluido: {s.fixedProduct!.name}
             </p>
           ))}
         </div>

@@ -21,15 +21,8 @@ function CartItemRow({ item }: { item: CartItem }) {
     .map((c) => `${c.typeName}: ${c.selectedOptions.map((o) => o.name).join(', ')}`)
 
   const comboLines = item.comboSlots
-    .filter((s) => s.selectedOption || s.fixedProduct)
-    .map((s) =>
-      s.fixedProduct
-        ? s.fixedProduct.name
-        : s.selectedOption
-        ? `${s.complementTypeName}: ${s.selectedOption.name}`
-        : ''
-    )
-    .filter(Boolean)
+    .filter((s) => s.fixedProduct)
+    .map((s) => s.fixedProduct!.name)
 
   return (
     <div className="flex flex-col gap-2 py-3">

@@ -53,8 +53,6 @@ export interface PublicComboItem {
   order: number
   product_id: number | null
   product: { id: number; name: string; description: string; price: number } | null
-  complement_type_id: number | null
-  complement_type: PublicComplementType | null
 }
 
 export interface PublicProductDetail extends PublicMenuProduct {
@@ -84,9 +82,6 @@ export interface CartComboSlot {
   slotId: number
   order: number
   fixedProduct?: { id: number; name: string }
-  complementTypeId?: number
-  complementTypeName?: string
-  selectedOption?: CartSelectedOption
 }
 
 export interface CartItem {

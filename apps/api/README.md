@@ -100,23 +100,15 @@ Cada registro es un slot (componente) de un producto COMBO.
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `order` | Int | Orden de presentación del slot |
-| `product_id` | Int? | **Slot fijo**: el componente es siempre ese producto del catálogo |
-| `complement_type_id` | Int? | **Slot flexible**: lista las opciones disponibles para que el cliente elija |
+| `product_id` | Int? | Producto del catálogo incluido en este slot |
 
-Un slot es fijo **o** flexible, nunca ambos.
+Cada slot apunta a un producto real del catálogo. El cliente puede personalizarlo con los propios complementos de ese producto.
 
-**Ejemplo — Combo Big Burger:**
+**Ejemplo — Combo Nuggets:**
 ```
-ComboItem 0: complement_type → "Elige tu hamburguesa" (flexible)
-  opciones: Big Burger → linked_product_id=1, Crispy Chicken → linked_product_id=3…
-
-ComboItem 1: complement_type → "Elige tu acompañamiento" (flexible)
-ComboItem 2: complement_type → "Elige tu bebida" (flexible)
-
-Combo Nuggets (mix fijo + flexible):
-ComboItem 0: product_id → Nuggets (9 uds)  ← fijo, siempre incluido
-ComboItem 1: complement_type → "Elige tu acompañamiento" (flexible)
-ComboItem 2: complement_type → "Elige tu bebida" (flexible)
+ComboItem 0: product_id → Nuggets (9 uds)
+ComboItem 1: product_id → Patatas Fritas
+ComboItem 2: product_id → Refresco
 ```
 
 ### ProductComplementType
@@ -139,7 +131,7 @@ Una opción concreta dentro de un tipo de complemento.
 | `price` | Int | Ajuste en céntimos. Positivo (+150), negativo (-50) o cero |
 | `increment` | Boolean | `true` si el precio se suma al total |
 | `is_disabled` | Boolean | Oculta la opción sin borrarla (stock, temporada…) |
-| `linked_product_id` | Int? | Si esta opción es un producto real, apunta a él. Permite heredar sus complementos al seleccionarla en un slot flexible de combo |
+| `linked_product_id` | Int? | Si esta opción representa un producto real del catálogo, apunta a él. Permite heredar sus complementos para personalización adicional |
 
 ---
 
@@ -260,8 +252,7 @@ DELETE /workspaces/:wid/products/:id/combo-items/:itemId       Eliminar slot
 
 **Body — añadir slot a combo:**
 ```json
-{ "complement_type_id": 9, "order": 0 }   // slot flexible
-{ "product_id": 3, "order": 1 }            // slot fijo
+{ "product_id": 3, "order": 0 }
 ```
 
 ### Tipos de complemento
@@ -375,11 +366,8 @@ Todos los precios se almacenan como enteros en céntimos (`899` = 8.99 €) para
 ### ComboItem en vez de parent_product_id
 Los combos usan una tabla `ComboItem` que referencia productos reales del catálogo. Esto permite:
 - Reutilizar el mismo producto (Big Burger) en varios combos
-- Heredar los complementos del producto elegido en slots flexibles
+- Heredar los complementos del producto incluido para personalización adicional
 - Un cambio en el producto base se refleja en todos los combos que lo usan
-
-### linked_product_id en ProductComplement
-Cada opción de un slot flexible apunta al producto real del catálogo. Permite que al elegir "Big Burger" en un combo, el sistema pueda cargar los complementos de la Big Burger para personalización adicional.
 
 ### ProductComplementType a nivel de restaurante
 Los tipos de complemento viven en el restaurante, no en el producto. "Salsas" se define una vez y se asigna a hamburguesas, acompañamientos y pizzas. Un cambio (añadir una nueva salsa) se refleja en todos los productos que lo tienen asignado.

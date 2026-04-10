@@ -209,9 +209,7 @@ Los precios se actualizan en tiempo real mientras el usuario selecciona opciones
   - `max_selectable === 1` → comportamiento radio (única elección)
   - `max_selectable > 1` → comportamiento checkbox (hasta N opciones)
   - Indicador visual de requerido / listo
-- **COMBO**: por cada `ComboItem`:
-  - Slot fijo → muestra el producto incluido (no requiere acción)
-  - Slot flexible → radio de opciones del tipo de complemento asignado
+- **COMBO**: por cada `ComboItem` muestra el producto incluido; si ese producto tiene complementos propios, el cliente puede personalizarlos
 - Botón "Añadir" deshabilitado hasta satisfacer todos los campos requeridos
 - Precio total reactivo visible en el botón
 

@@ -27,8 +27,8 @@ import type { ComplementType, ProductComplement } from '../types'
 const typeSchema = z.object({
   name: z.string().min(1, 'Requerido'),
   required: z.boolean(),
-  min_selectable: z.number({ invalid_type_error: 'Número requerido' }).int().min(0),
-  max_selectable: z.number({ invalid_type_error: 'Número requerido' }).int().min(1),
+  minSelectable: z.number({ invalid_type_error: 'Número requerido' }).int().min(0),
+  maxSelectable: z.number({ invalid_type_error: 'Número requerido' }).int().min(1),
 })
 type TypeFormValues = z.infer<typeof typeSchema>
 
@@ -100,7 +100,7 @@ function OptionsSection({
 
   async function toggleDisabled(c: ProductComplement) {
     await updateComplement
-      .mutateAsync({ typeId, complementId: c.id, is_disabled: !c.is_disabled })
+      .mutateAsync({ typeId, complementId: c.id, isDisabled: !c.isDisabled })
       .catch((e) => toast.error(e.message))
   }
 
@@ -113,22 +113,22 @@ function OptionsSection({
       {options.map((c) => (
         <div key={c.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
           <div className="flex-1 min-w-0">
-            <p className={cn('text-sm font-medium truncate', c.is_disabled && 'line-through text-muted-foreground')}>
+            <p className={cn('text-sm font-medium truncate', c.isDisabled && 'line-through text-muted-foreground')}>
               {c.name}
             </p>
             <p className="text-xs text-muted-foreground">{formatPrice(c.price)}</p>
           </div>
-          {c.is_disabled && (
+          {c.isDisabled && (
             <Badge variant="secondary" className="text-xs shrink-0">Desactivada</Badge>
           )}
           <Button
             variant="ghost"
             size="icon"
             className="text-muted-foreground shrink-0"
-            title={c.is_disabled ? 'Activar' : 'Desactivar'}
+            title={c.isDisabled ? 'Activar' : 'Desactivar'}
             onClick={() => toggleDisabled(c)}
           >
-            {c.is_disabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            {c.isDisabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
           </Button>
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => openEdit(c)}>
             <Pencil className="h-3.5 w-3.5" />
@@ -205,12 +205,12 @@ export function ComplementTypesPage() {
 
   const form = useForm<TypeFormValues>({
     resolver: zodResolver(typeSchema),
-    defaultValues: { name: '', required: false, min_selectable: 0, max_selectable: 1 },
+    defaultValues: { name: '', required: false, minSelectable: 0, maxSelectable: 1 },
   })
 
   function openCreate() {
     setEditTypeId(null)
-    form.reset({ name: '', required: false, min_selectable: 0, max_selectable: 1 })
+    form.reset({ name: '', required: false, minSelectable: 0, maxSelectable: 1 })
     setFormOpen(true)
   }
 
@@ -219,8 +219,8 @@ export function ComplementTypesPage() {
     form.reset({
       name: t.name,
       required: t.required,
-      min_selectable: t.min_selectable,
-      max_selectable: t.max_selectable,
+      minSelectable: t.minSelectable,
+      maxSelectable: t.maxSelectable,
     })
     setFormOpen(true)
   }
@@ -274,11 +274,11 @@ export function ComplementTypesPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{t.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t.required ? 'Requerido' : 'Opcional'} · min {t.min_selectable} / máx {t.max_selectable}
+                  {t.required ? 'Requerido' : 'Opcional'} · min {t.minSelectable} / máx {t.maxSelectable}
                 </p>
               </div>
               <Badge variant="outline" className="shrink-0 text-xs">
-                {t.product_complements.length} opciones
+                {t.productComplements.length} opciones
               </Badge>
               <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>
                 <Pencil className="h-4 w-4" />
@@ -314,7 +314,7 @@ export function ComplementTypesPage() {
               <TabsTrigger value="info" className="flex-1">Información</TabsTrigger>
               {editType && (
                 <TabsTrigger value="options" className="flex-1">
-                  Opciones ({editType.product_complements.length})
+                  Opciones ({editType.productComplements.length})
                 </TabsTrigger>
               )}
             </TabsList>
@@ -331,14 +331,14 @@ export function ComplementTypesPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <FormInput
                       control={form.control}
-                      name="min_selectable"
+                      name="minSelectable"
                       label="Mínimo seleccionable"
                       type="number"
                       description="0 = ninguno obligatorio"
                     />
                     <FormInput
                       control={form.control}
-                      name="max_selectable"
+                      name="maxSelectable"
                       label="Máximo seleccionable"
                       type="number"
                       description="1 = elección única"
@@ -365,7 +365,7 @@ export function ComplementTypesPage() {
                 <OptionsSection
                   workspaceId={wid}
                   typeId={editType.id}
-                  options={editType.product_complements}
+                  options={editType.productComplements}
                 />
               </TabsContent>
             )}

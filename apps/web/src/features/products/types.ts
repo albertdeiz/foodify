@@ -7,42 +7,40 @@ export interface Product {
   name: string
   description: string
   price: number
-  image_url: string | null
+  imageUrl: string | null
   type: ProductType
-  is_available: boolean
+  isAvailable: boolean
   content: string | null
-  workspace_id: number
-  created_at: string
-  updated_at: string
+  workspaceId: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ComboItem {
   id: number
   order: number
-  product_id: number | null
-  complement_type_id: number | null
+  productId: number | null
   product: Product | null
-  complement_type: ComplementType | null
 }
 
 export interface ProductWithDetails extends Product {
-  complement_types: ComplementType[]
-  combo_items: ComboItem[]
+  complementTypes: ComplementType[]
+  comboItems: ComboItem[]
 }
 
 export interface CreateProductInput {
   name: string
   description: string
   price: number
-  image_url?: string
+  imageUrl?: string
   type?: ProductType
   content?: string
+  isAvailable?: boolean
 }
 
 export interface CreateComboItemInput {
   order: number
-  product_id?: number
-  complement_type_id?: number
+  productId?: number
 }
 
 export interface UpdateComboItemInput {

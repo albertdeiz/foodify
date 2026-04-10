@@ -3,8 +3,8 @@ export interface Workspace {
   name: string
   slug: string
   address: string
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateWorkspaceInput {

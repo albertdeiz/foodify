@@ -45,10 +45,10 @@ function ComplementSection({
   selected: CartSelectedOption[]
   onChange: (options: CartSelectedOption[]) => void
 }) {
-  const isMulti = ct.max_selectable > 1
+  const isMulti = ct.maxSelectable > 1
   const selectedIds = new Set(selected.map((o) => o.id))
 
-  function toggle(opt: PublicComplementType['product_complements'][number]) {
+  function toggle(opt: PublicComplementType['productComplements'][number]) {
     const next: CartSelectedOption = { id: opt.id, name: opt.name, price: opt.price, increment: opt.increment }
     if (!isMulti) {
       // Radio behaviour
@@ -56,13 +56,13 @@ function ComplementSection({
     } else {
       if (selectedIds.has(opt.id)) {
         onChange(selected.filter((o) => o.id !== opt.id))
-      } else if (selected.length < ct.max_selectable) {
+      } else if (selected.length < ct.maxSelectable) {
         onChange([...selected, next])
       }
     }
   }
 
-  const missing = ct.required ? Math.max(0, (ct.min_selectable || 1) - selected.length) : 0
+  const missing = ct.required ? Math.max(0, (ct.minSelectable || 1) - selected.length) : 0
 
   return (
     <div>
@@ -71,17 +71,17 @@ function ComplementSection({
         <span className="text-xs text-muted-foreground">
           {ct.required ? (
             <span className={cn('font-medium', missing > 0 ? 'text-destructive' : 'text-green-600')}>
-              {missing > 0 ? `Elige ${ct.min_selectable || 1}` : '✓ Listo'}
+              {missing > 0 ? `Elige ${ct.minSelectable || 1}` : '✓ Listo'}
             </span>
           ) : (
-            `Hasta ${ct.max_selectable}`
+            `Hasta ${ct.maxSelectable}`
           )}
         </span>
       </div>
       <div className="flex flex-col gap-1">
-        {ct.product_complements.map((opt) => {
+        {ct.productComplements.map((opt) => {
           const checked = selectedIds.has(opt.id)
-          const disabled = !checked && isMulti && selected.length >= ct.max_selectable
+          const disabled = !checked && isMulti && selected.length >= ct.maxSelectable
           return (
             <button
               key={opt.id}
@@ -136,7 +136,7 @@ function ComboSlotSection({
         </div>
         <Badge variant="outline" className="text-xs">Fijo</Badge>
       </div>
-      {slot.product.complement_types.map((ct) => (
+      {slot.product.complementTypes.map((ct) => (
         <div key={ct.id} className="pl-3 border-l-2 border-muted">
           <ComplementSection
             ct={ct}
@@ -166,7 +166,7 @@ function SheetContent({
 
   // Complement selections: typeId → CartSelectedOption[]
   const [complementSelections, setComplementSelections] = useState<Record<number, CartSelectedOption[]>>(() =>
-    Object.fromEntries(product.complement_types.map((ct) => [ct.id, []]))
+    Object.fromEntries(product.complementTypes.map((ct) => [ct.id, []]))
   )
 
   // Per-slot complement selections: slotId → typeId → CartSelectedOption[]
@@ -174,9 +174,9 @@ function SheetContent({
     Record<number, Record<number, CartSelectedOption[]>>
   >(() =>
     Object.fromEntries(
-      product.combo_items.map((slot) => [
+      product.comboItems.map((slot) => [
         slot.id,
-        Object.fromEntries((slot.product?.complement_types ?? []).map((ct) => [ct.id, []])),
+        Object.fromEntries((slot.product?.complementTypes ?? []).map((ct) => [ct.id, []])),
       ]),
     )
   )
@@ -185,12 +185,12 @@ function SheetContent({
 
   // Reset when product changes
   useEffect(() => {
-    setComplementSelections(Object.fromEntries(product.complement_types.map((ct) => [ct.id, []])))
+    setComplementSelections(Object.fromEntries(product.complementTypes.map((ct) => [ct.id, []])))
     setSlotComplementSelections(
       Object.fromEntries(
-        product.combo_items.map((slot) => [
+        product.comboItems.map((slot) => [
           slot.id,
-          Object.fromEntries((slot.product?.complement_types ?? []).map((ct) => [ct.id, []])),
+          Object.fromEntries((slot.product?.complementTypes ?? []).map((ct) => [ct.id, []])),
         ]),
       ),
     )
@@ -202,27 +202,27 @@ function SheetContent({
     uid: '',
     productId: product.id,
     productName: product.name,
-    productImage: product.image_url,
+    productImage: product.imageUrl,
     productType: product.type,
     menuPrice,
-    complements: product.complement_types.map((ct) => ({
+    complements: product.complementTypes.map((ct) => ({
       typeId: ct.id,
       typeName: ct.name,
       required: ct.required,
-      min_selectable: ct.min_selectable,
-      max_selectable: ct.max_selectable,
+      minSelectable: ct.minSelectable,
+      maxSelectable: ct.maxSelectable,
       selectedOptions: complementSelections[ct.id] ?? [],
     })),
-    comboSlots: product.combo_items.map((slot) => ({
+    comboSlots: product.comboItems.map((slot) => ({
       slotId: slot.id,
       order: slot.order,
       fixedProduct: slot.product ? { id: slot.product.id, name: slot.product.name } : undefined,
-      complements: (slot.product?.complement_types ?? []).map((ct) => ({
+      complements: (slot.product?.complementTypes ?? []).map((ct) => ({
         typeId: ct.id,
         typeName: ct.name,
         required: ct.required,
-        min_selectable: ct.min_selectable,
-        max_selectable: ct.max_selectable,
+        minSelectable: ct.minSelectable,
+        maxSelectable: ct.maxSelectable,
         selectedOptions: slotComplementSelections[slot.id]?.[ct.id] ?? [],
       })),
     })),
@@ -231,38 +231,38 @@ function SheetContent({
   const unitPrice = computeUnitPrice(tempItem)
 
   // Validation
-  const requiredErrors = product.complement_types.filter((ct) => {
+  const requiredErrors = product.complementTypes.filter((ct) => {
     if (!ct.required) return false
-    return (complementSelections[ct.id] ?? []).length < (ct.min_selectable || 1)
+    return (complementSelections[ct.id] ?? []).length < (ct.minSelectable || 1)
   })
-  const slotRequiredErrors = product.combo_items.flatMap((slot) =>
-    (slot.product?.complement_types ?? []).filter((ct) => {
+  const slotRequiredErrors = product.comboItems.flatMap((slot) =>
+    (slot.product?.complementTypes ?? []).filter((ct) => {
       if (!ct.required) return false
-      return (slotComplementSelections[slot.id]?.[ct.id] ?? []).length < (ct.min_selectable || 1)
+      return (slotComplementSelections[slot.id]?.[ct.id] ?? []).length < (ct.minSelectable || 1)
     }),
   )
   const isValid = requiredErrors.length === 0 && slotRequiredErrors.length === 0
 
   function handleAdd() {
-    const cartComplements: CartComplement[] = product.complement_types.map((ct) => ({
+    const cartComplements: CartComplement[] = product.complementTypes.map((ct) => ({
       typeId: ct.id,
       typeName: ct.name,
       required: ct.required,
-      min_selectable: ct.min_selectable,
-      max_selectable: ct.max_selectable,
+      minSelectable: ct.minSelectable,
+      maxSelectable: ct.maxSelectable,
       selectedOptions: complementSelections[ct.id] ?? [],
     }))
 
-    const cartSlots: CartComboSlot[] = product.combo_items.map((slot) => ({
+    const cartSlots: CartComboSlot[] = product.comboItems.map((slot) => ({
       slotId: slot.id,
       order: slot.order,
       fixedProduct: slot.product ? { id: slot.product.id, name: slot.product.name } : undefined,
-      complements: (slot.product?.complement_types ?? []).map((ct) => ({
+      complements: (slot.product?.complementTypes ?? []).map((ct) => ({
         typeId: ct.id,
         typeName: ct.name,
         required: ct.required,
-        min_selectable: ct.min_selectable,
-        max_selectable: ct.max_selectable,
+        minSelectable: ct.minSelectable,
+        maxSelectable: ct.maxSelectable,
         selectedOptions: slotComplementSelections[slot.id]?.[ct.id] ?? [],
       })),
     }))
@@ -271,7 +271,7 @@ function SheetContent({
       uid: uid(),
       productId: product.id,
       productName: product.name,
-      productImage: product.image_url,
+      productImage: product.imageUrl,
       productType: product.type,
       menuPrice,
       complements: cartComplements,
@@ -284,8 +284,8 @@ function SheetContent({
   return (
     <div className="relative flex flex-col gap-5">
       {/* Image */}
-      {product.image_url ? (
-        <img src={product.image_url} alt={product.name} className="w-full h-44 object-cover rounded-xl" />
+      {product.imageUrl ? (
+        <img src={product.imageUrl} alt={product.name} className="w-full h-44 object-cover rounded-xl" />
       ) : null}
 
       {/* Header */}
@@ -307,11 +307,11 @@ function SheetContent({
       )}
 
       {/* Complement types */}
-      {product.complement_types.length > 0 && (
+      {product.complementTypes.length > 0 && (
         <>
           <Separator />
           <div className="flex flex-col gap-5">
-            {product.complement_types.map((ct) => (
+            {product.complementTypes.map((ct) => (
               <ComplementSection
                 key={ct.id}
                 ct={ct}
@@ -326,14 +326,14 @@ function SheetContent({
       )}
 
       {/* Combo slots */}
-      {product.combo_items.length > 0 && (
+      {product.comboItems.length > 0 && (
         <>
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground -mb-2">
             Compuesto por
           </p>
           <div className="flex flex-col gap-4">
-            {product.combo_items.map((slot) => (
+            {product.comboItems.map((slot) => (
               <ComboSlotSection
                 key={slot.id}
                 slot={slot}

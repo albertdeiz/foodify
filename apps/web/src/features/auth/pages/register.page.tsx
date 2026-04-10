@@ -10,8 +10,8 @@ import { FormInput } from '@/shared/components/form'
 import { useRegister } from '../hooks/use-auth'
 
 const schema = z.object({
-  first_name: z.string().min(1, 'Requerido'),
-  last_name: z.string().min(1, 'Requerido'),
+  firstName: z.string().min(1, 'Requerido'),
+  lastName: z.string().min(1, 'Requerido'),
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
 })
@@ -22,7 +22,7 @@ export function RegisterPage() {
   const register = useRegister()
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { first_name: '', last_name: '', email: '', password: '' },
+    defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   })
 
   async function onSubmit(values: FormValues) {
@@ -41,8 +41,8 @@ export function RegisterPage() {
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <FormInput control={form.control} name="first_name" label="Nombre" placeholder="Juan" />
-              <FormInput control={form.control} name="last_name" label="Apellido" placeholder="García" />
+              <FormInput control={form.control} name="firstName" label="Nombre" placeholder="Juan" />
+              <FormInput control={form.control} name="lastName" label="Apellido" placeholder="García" />
             </div>
             <FormInput control={form.control} name="email" label="Email" type="email" placeholder="tu@email.com" />
             <FormInput control={form.control} name="password" label="Contraseña" type="password" placeholder="••••••••" />

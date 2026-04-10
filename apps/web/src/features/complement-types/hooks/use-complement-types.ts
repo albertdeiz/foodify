@@ -50,7 +50,7 @@ export function useAddComplement(workspaceId: number) {
 export function useUpdateComplement(workspaceId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ typeId, complementId, ...input }: { typeId: number; complementId: number } & Partial<CreateComplementInput> & { is_disabled?: boolean }) =>
+    mutationFn: ({ typeId, complementId, ...input }: { typeId: number; complementId: number } & Partial<CreateComplementInput> & { isDisabled?: boolean }) =>
       complementTypesApi.updateComplement(workspaceId, typeId, complementId, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: complementTypeKeys.all(workspaceId) }),
   })

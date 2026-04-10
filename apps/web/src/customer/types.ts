@@ -13,10 +13,10 @@ export interface PublicMenuProduct {
   name: string
   description: string
   price: number
-  base_price: number
+  basePrice: number
   type: PublicProductType
   content: string | null
-  image_url: string | null
+  imageUrl: string | null
 }
 
 export interface PublicMenuCategory {
@@ -43,27 +43,27 @@ export interface PublicComplementType {
   id: number
   name: string
   required: boolean
-  min_selectable: number
-  max_selectable: number
-  product_complements: PublicComplement[]
+  minSelectable: number
+  maxSelectable: number
+  productComplements: PublicComplement[]
 }
 
 export interface PublicComboItem {
   id: number
   order: number
-  product_id: number | null
+  productId: number | null
   product: {
     id: number
     name: string
     description: string
     price: number
-    complement_types: PublicComplementType[]
+    complementTypes: PublicComplementType[]
   } | null
 }
 
 export interface PublicProductDetail extends PublicMenuProduct {
-  complement_types: PublicComplementType[]
-  combo_items: PublicComboItem[]
+  complementTypes: PublicComplementType[]
+  comboItems: PublicComboItem[]
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -79,8 +79,8 @@ export interface CartComplement {
   typeId: number
   typeName: string
   required: boolean
-  min_selectable: number
-  max_selectable: number
+  minSelectable: number
+  maxSelectable: number
   selectedOptions: CartSelectedOption[]
 }
 

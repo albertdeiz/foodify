@@ -3,31 +3,31 @@ export interface ProductComplement {
   name: string
   price: number
   increment: boolean
-  is_disabled: boolean
-  linked_product_id: number | null
-  product_complement_type_id: number
+  isDisabled: boolean
+  linkedProductId: number | null
+  productComplementTypeId: number
 }
 
 export interface ComplementType {
   id: number
   name: string
   required: boolean
-  min_selectable: number
-  max_selectable: number
-  workspace_id: number
-  product_complements: ProductComplement[]
+  minSelectable: number
+  maxSelectable: number
+  workspaceId: number
+  productComplements: ProductComplement[]
 }
 
 export interface CreateComplementTypeInput {
   name: string
   required: boolean
-  min_selectable: number
-  max_selectable: number
+  minSelectable: number
+  maxSelectable: number
 }
 
 export interface CreateComplementInput {
   name: string
   price: number
   increment?: boolean
-  linked_product_id?: number
+  linkedProductId?: number
 }

@@ -1,10 +1,10 @@
 export interface Menu {
   id: number
   name: string
-  is_active: boolean
-  workspace_id: number
-  created_at: string
-  updated_at: string
+  isActive: boolean
+  workspaceId: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateMenuInput {
@@ -12,9 +12,8 @@ export interface CreateMenuInput {
 }
 
 export interface MenuProductPrice {
-  id: number
-  menu_id: number
-  product_id: number
+  menuId: number
+  productId: number
   price: number
 }
 
@@ -29,11 +28,11 @@ export interface MenuProduct {
   name: string
   description: string
   price: number
-  base_price: number
+  basePrice: number
   type: MenuProductType
-  is_available: boolean
+  isAvailable: boolean
   content: string | null
-  image_url: string | null
+  imageUrl: string | null
 }
 
 export interface MenuCategoryEntry {

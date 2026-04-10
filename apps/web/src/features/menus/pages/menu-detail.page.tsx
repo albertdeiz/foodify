@@ -89,7 +89,7 @@ function ProductDetailContent({
               <Badge variant={TYPE_BADGE[product.type] ?? 'outline'} className="text-xs">
                 {TYPE_LABEL[product.type] ?? product.type}
               </Badge>
-              {!product.is_available && (
+              {!product.isAvailable && (
                 <Badge variant="secondary" className="text-xs">No disponible</Badge>
               )}
             </div>
@@ -110,9 +110,9 @@ function ProductDetailContent({
       </DialogHeader>
 
       {/* Imagen */}
-      {product.image_url && (
+      {product.imageUrl && (
         <img
-          src={product.image_url}
+          src={product.imageUrl}
           alt={product.name}
           className="w-full h-44 object-cover rounded-lg border"
         />
@@ -130,24 +130,24 @@ function ProductDetailContent({
         </div>
       )}
 
-      {/* Complementos (COMPLEMENTED y COMBO con slots flexibles) */}
-      {product.complement_types.length > 0 && (
+      {/* Complementos */}
+      {product.complementTypes.length > 0 && (
         <div className="flex flex-col gap-3">
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Personalización
           </p>
-          {product.complement_types.map((ct) => (
+          {product.complementTypes.map((ct) => (
             <div key={ct.id}>
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-sm font-medium">{ct.name}</p>
                 <span className="text-xs text-muted-foreground">
-                  {ct.required ? 'Requerido' : 'Opcional'} · máx {ct.max_selectable}
+                  {ct.required ? 'Requerido' : 'Opcional'} · máx {ct.maxSelectable}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                {ct.product_complements
-                  .filter((c) => !c.is_disabled)
+                {ct.productComplements
+                  .filter((c) => !c.isDisabled)
                   .map((c) => (
                     <div
                       key={c.id}
@@ -159,7 +159,7 @@ function ProductDetailContent({
                       </span>
                     </div>
                   ))}
-                {ct.product_complements.filter((c) => !c.is_disabled).length === 0 && (
+                {ct.productComplements.filter((c) => !c.isDisabled).length === 0 && (
                   <p className="text-xs text-muted-foreground px-1">Sin opciones activas.</p>
                 )}
               </div>
@@ -169,13 +169,13 @@ function ProductDetailContent({
       )}
 
       {/* Slots del combo */}
-      {product.type === 'COMBO' && product.combo_items.length > 0 && (
+      {product.type === 'COMBO' && product.comboItems.length > 0 && (
         <div className="flex flex-col gap-3">
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Compuesto por
           </p>
-          {product.combo_items.map((item) => (
+          {product.comboItems.map((item) => (
             <ComboItemRow key={item.id} item={item} />
           ))}
         </div>
@@ -185,56 +185,24 @@ function ProductDetailContent({
 }
 
 function ComboItemRow({ item }: { item: ComboItem }) {
-  // Slot fijo: producto concreto
-  if (item.product) {
-    return (
-      <div className="rounded-md border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground w-5 shrink-0">#{item.order}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{item.product.name}</p>
-            {item.product.description && (
-              <p className="text-xs text-muted-foreground truncate">{item.product.description}</p>
-            )}
-          </div>
-          <Badge variant="outline" className="text-xs shrink-0">Fijo</Badge>
-          <span className="text-xs tabular-nums text-muted-foreground shrink-0">
-            {formatPrice(item.product.price)}
-          </span>
-        </div>
-      </div>
-    )
-  }
-
-  // Slot flexible: tipo de complemento con opciones a elegir
-  if (item.complement_type) {
-    const ct = item.complement_type
-    const activeOptions = ct.product_complements.filter((c) => !c.is_disabled)
-    return (
-      <div className="rounded-md border px-3 py-2 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground w-5 shrink-0">#{item.order}</span>
-          <p className="text-sm font-medium flex-1 truncate">{ct.name}</p>
-          <Badge variant="secondary" className="text-xs shrink-0">Elige 1</Badge>
-        </div>
-        <div className="flex flex-wrap gap-1 pl-7">
-          {activeOptions.map((opt) => (
-            <span
-              key={opt.id}
-              className="text-xs bg-muted rounded-full px-2 py-0.5"
-            >
-              {opt.name}
-            </span>
-          ))}
-          {activeOptions.length === 0 && (
-            <span className="text-xs text-muted-foreground">Sin opciones activas.</span>
+  if (!item.product) return null
+  return (
+    <div className="rounded-md border px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-5 shrink-0">#{item.order}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{item.product.name}</p>
+          {item.product.description && (
+            <p className="text-xs text-muted-foreground truncate">{item.product.description}</p>
           )}
         </div>
+        <Badge variant="outline" className="text-xs shrink-0">Fijo</Badge>
+        <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+          {formatPrice(item.product.price)}
+        </span>
       </div>
-    )
-  }
-
-  return null
+    </div>
+  )
 }
 
 // ─── Product Row (lista) ──────────────────────────────────────────────────────
@@ -245,7 +213,7 @@ function ProductRow({
   product: MenuProduct
   onClick: () => void
 }) {
-  const hasSpecialPrice = product.price !== product.base_price
+  const hasSpecialPrice = product.price !== product.basePrice
 
   return (
     <button
@@ -253,13 +221,13 @@ function ProductRow({
       onClick={onClick}
       className={cn(
         'flex items-start gap-4 px-4 py-4 bg-background w-full text-left transition-colors hover:bg-muted/40 group',
-        !product.is_available && 'opacity-40',
+        !product.isAvailable && 'opacity-40',
       )}
     >
       {/* Imagen */}
-      {product.image_url ? (
+      {product.imageUrl ? (
         <img
-          src={product.image_url}
+          src={product.imageUrl}
           alt={product.name}
           className="w-20 h-20 rounded-lg object-cover shrink-0 border"
         />
@@ -276,7 +244,7 @@ function ProductRow({
           <Badge variant={TYPE_BADGE[product.type] ?? 'outline'} className="text-xs">
             {TYPE_LABEL[product.type] ?? product.type}
           </Badge>
-          {!product.is_available && (
+          {!product.isAvailable && (
             <Badge variant="secondary" className="text-xs">No disponible</Badge>
           )}
         </div>
@@ -296,7 +264,7 @@ function ProductRow({
           <p className="text-sm font-semibold tabular-nums">{formatPrice(product.price)}</p>
           {hasSpecialPrice && (
             <p className="text-xs text-muted-foreground line-through tabular-nums">
-              {formatPrice(product.base_price)}
+              {formatPrice(product.basePrice)}
             </p>
           )}
         </div>
@@ -338,8 +306,8 @@ export function MenuDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-semibold">{menu.name}</h2>
-            <Badge variant={menu.is_active ? 'default' : 'secondary'}>
-              {menu.is_active ? 'Activa' : 'Inactiva'}
+            <Badge variant={menu.isActive ? 'default' : 'secondary'}>
+              {menu.isActive ? 'Activa' : 'Inactiva'}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -391,7 +359,7 @@ export function MenuDetailPage() {
         workspaceId={wid}
         productId={selectedProduct?.id ?? null}
         menuPrice={selectedProduct?.price ?? 0}
-        basePrice={selectedProduct?.base_price ?? 0}
+        basePrice={selectedProduct?.basePrice ?? 0}
         onClose={() => setSelectedProduct(null)}
       />
     </div>

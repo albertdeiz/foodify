@@ -22,7 +22,7 @@ import type { Menu } from '../types'
 
 const schema = z.object({
   name: z.string().min(1, 'Requerido'),
-  is_active: z.boolean(),
+  isActive: z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -45,18 +45,18 @@ export function MenusPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', is_active: true },
+    defaultValues: { name: '', isActive: true },
   })
 
   function openCreate() {
     setEditMenu(null)
-    form.reset({ name: '', is_active: true })
+    form.reset({ name: '', isActive: true })
     setFormOpen(true)
   }
 
   function openEdit(menu: Menu) {
     setEditMenu(menu)
-    form.reset({ name: menu.name, is_active: menu.is_active })
+    form.reset({ name: menu.name, isActive: menu.isActive })
     setFormOpen(true)
   }
 
@@ -76,7 +76,7 @@ export function MenusPage() {
 
   async function onSubmit(values: FormValues) {
     if (editMenu) {
-      await menusApi.update(wid, editMenu.id, values)
+      await menusApi.update(wid, editMenu.id, { name: values.name, isActive: values.isActive })
         .then(() => { toast.success('Carta actualizada'); qc.invalidateQueries({ queryKey: menuKeys.all(wid) }) })
         .catch((e) => toast.error(e.message))
     } else {
@@ -94,7 +94,7 @@ export function MenusPage() {
   }
 
   async function handleToggleActive(menu: Menu) {
-    await menusApi.update(wid, menu.id, { is_active: !menu.is_active })
+    await menusApi.update(wid, menu.id, { isActive: !menu.isActive })
       .then(() => qc.invalidateQueries({ queryKey: menuKeys.all(wid) }))
       .catch((e) => toast.error(e.message))
   }
@@ -141,15 +141,15 @@ export function MenusPage() {
           {menus?.map((menu) => (
             <div key={menu.id} className="flex items-center gap-4 px-4 py-3 bg-background">
               <Switch
-                checked={menu.is_active}
+                checked={menu.isActive}
                 onCheckedChange={() => handleToggleActive(menu)}
                 aria-label="Activa"
               />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{menu.name}</p>
               </div>
-              <Badge variant={menu.is_active ? 'default' : 'secondary'}>
-                {menu.is_active ? 'Activa' : 'Inactiva'}
+              <Badge variant={menu.isActive ? 'default' : 'secondary'}>
+                {menu.isActive ? 'Activa' : 'Inactiva'}
               </Badge>
               <Button variant="ghost" size="icon" title="Ver carta" onClick={() => navigate(`/workspaces/${workspaceId}/menus/${menu.id}`)}>
                 <Eye className="h-4 w-4" />
@@ -177,7 +177,7 @@ export function MenusPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-2">
               <FormInput control={form.control} name="name" label="Nombre" placeholder="Carta de verano" />
-              {editMenu && <FormSwitch control={form.control} name="is_active" label="Carta activa" />}
+              {editMenu && <FormSwitch control={form.control} name="isActive" label="Carta activa" />}
               <Button type="submit" disabled={createMenu.isPending}>
                 {editMenu ? 'Guardar cambios' : 'Crear carta'}
               </Button>

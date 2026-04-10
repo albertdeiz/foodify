@@ -62,8 +62,8 @@ export function useDeleteProduct(workspaceId: number) {
 export function useToggleProductAvailability(workspaceId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, is_available }: { id: number; is_available: boolean }) =>
-      productsApi.update(workspaceId, id, { is_available }),
+    mutationFn: ({ id, isAvailable }: { id: number; isAvailable: boolean }) =>
+      productsApi.update(workspaceId, id, { isAvailable }),
     onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all(workspaceId) }),
   })
 }

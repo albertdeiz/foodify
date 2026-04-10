@@ -28,7 +28,7 @@ function ProductCard({
   product: PublicMenuProduct
   onClick: () => void
 }) {
-  const hasSpecialPrice = product.price !== product.base_price
+  const hasSpecialPrice = product.price !== product.basePrice
 
   return (
     <button
@@ -36,9 +36,9 @@ function ProductCard({
       onClick={onClick}
       className="flex items-start gap-3 w-full text-left p-4 hover:bg-muted/30 transition-colors group"
     >
-      {product.image_url ? (
+      {product.imageUrl ? (
         <img
-          src={product.image_url}
+          src={product.imageUrl}
           alt={product.name}
           className="w-20 h-20 rounded-xl object-cover shrink-0 border"
         />
@@ -70,7 +70,7 @@ function ProductCard({
           <p className="text-sm font-bold tabular-nums">{fmt(product.price)}</p>
           {hasSpecialPrice && (
             <p className="text-xs text-muted-foreground line-through tabular-nums">
-              {fmt(product.base_price)}
+              {fmt(product.basePrice)}
             </p>
           )}
         </div>

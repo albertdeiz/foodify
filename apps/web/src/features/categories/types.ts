@@ -2,7 +2,7 @@ export interface Category {
   id: number
   name: string
   order: number
-  workspace_id: number
+  workspaceId: number
 }
 
 export interface CreateCategoryInput {

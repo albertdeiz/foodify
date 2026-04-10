@@ -15,7 +15,7 @@ export function AppLayout() {
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
   const initials = user
-    ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : '?'
 
   return (
@@ -31,7 +31,7 @@ export function AppLayout() {
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
-              <span className="text-sm">{user?.first_name} {user?.last_name}</span>
+              <span className="text-sm">{user?.firstName} {user?.lastName}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

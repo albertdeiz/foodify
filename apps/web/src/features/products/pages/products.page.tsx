@@ -26,8 +26,8 @@ const schema = z.object({
   price: z.number({ invalid_type_error: 'Número requerido' }).positive('Debe ser mayor a 0'),
   type: z.enum(['REGULAR', 'COMPLEMENTED', 'COMBO']),
   content: z.string().optional(),
-  image_url: z.string().url('URL inválida').optional().or(z.literal('')),
-  is_available: z.boolean(),
+  imageUrl: z.string().url('URL inválida').optional().or(z.literal('')),
+  isAvailable: z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -54,7 +54,7 @@ function ComplementTypesSection({ workspaceId, productId }: { workspaceId: numbe
   const { data: detail } = useProductDetail(workspaceId, productId)
   const { data: allTypes } = useComplementTypes(workspaceId)
 
-  const assignedIds = new Set(detail?.complement_types.map((t) => t.id) ?? [])
+  const assignedIds = new Set(detail?.complementTypes.map((t) => t.id) ?? [])
 
   async function toggle(typeId: number) {
     if (assignedIds.has(typeId)) {
@@ -89,7 +89,7 @@ function ComplementTypesSection({ workspaceId, productId }: { workspaceId: numbe
             <div>
               <p className="text-sm font-medium">{type.name}</p>
               <p className="text-xs text-muted-foreground">
-                {type.required ? 'Requerido' : 'Opcional'} · Máx. {type.max_selectable} · {type.product_complements.length} opciones
+                {type.required ? 'Requerido' : 'Opcional'} · Máx. {type.maxSelectable} · {type.productComplements.length} opciones
               </p>
             </div>
             {assigned && <Check className="h-4 w-4 text-primary" />}
@@ -104,29 +104,20 @@ function ComplementTypesSection({ workspaceId, productId }: { workspaceId: numbe
 function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; productId: number }) {
   const { data: comboItems, isLoading } = useComboItems(workspaceId, productId)
   const { data: allProducts } = useProducts(workspaceId)
-  const { data: allTypes } = useComplementTypes(workspaceId)
   const addComboItem = useAddComboItem(workspaceId, productId)
   const deleteComboItem = useDeleteComboItem(workspaceId, productId)
   const [addOpen, setAddOpen] = useState(false)
-  const [slotType, setSlotType] = useState<'fixed' | 'flexible'>('flexible')
   const [selectedProductId, setSelectedProductId] = useState('')
-  const [selectedTypeId, setSelectedTypeId] = useState('')
   const [order, setOrder] = useState('0')
 
   const otherProducts = allProducts?.filter((p) => p.id !== productId) ?? []
 
   async function handleAdd() {
-    const input =
-      slotType === 'fixed'
-        ? { product_id: Number(selectedProductId), order: Number(order) }
-        : { complement_type_id: Number(selectedTypeId), order: Number(order) }
-
-    await addComboItem.mutateAsync(input)
+    await addComboItem.mutateAsync({ productId: Number(selectedProductId), order: Number(order) })
       .then(() => {
         toast.success('Slot añadido')
         setAddOpen(false)
         setSelectedProductId('')
-        setSelectedTypeId('')
         setOrder(String((comboItems?.length ?? 0) + 1))
       })
       .catch((e) => toast.error(e.message))
@@ -134,18 +125,6 @@ function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; pr
 
   async function handleDelete(itemId: number) {
     await deleteComboItem.mutateAsync(itemId).catch((e) => toast.error(e.message))
-  }
-
-  function slotLabel(item: { product_id: number | null; complement_type_id: number | null }) {
-    if (item.product_id) {
-      const p = allProducts?.find((x) => x.id === item.product_id)
-      return p ? `Fijo: ${p.name}` : `Producto #${item.product_id}`
-    }
-    if (item.complement_type_id) {
-      const t = allTypes?.find((x) => x.id === item.complement_type_id)
-      return t ? `Flexible: ${t.name}` : `Tipo #${item.complement_type_id}`
-    }
-    return 'Slot sin configurar'
   }
 
   return (
@@ -160,10 +139,10 @@ function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; pr
         <div key={item.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
           <span className="text-xs text-muted-foreground w-6 shrink-0">#{item.order}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{slotLabel(item)}</p>
-            <p className="text-xs text-muted-foreground">
-              {item.product_id ? 'Slot fijo' : 'Slot flexible'}
+            <p className="text-sm font-medium truncate">
+              {item.product ? `Fijo: ${item.product.name}` : `Producto #${item.productId}`}
             </p>
+            <p className="text-xs text-muted-foreground">Slot fijo</p>
           </div>
           <Button
             variant="ghost" size="icon" className="text-destructive shrink-0"
@@ -184,11 +163,13 @@ function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; pr
           <div className="grid grid-cols-2 gap-2">
             <select
               className="flex h-9 w-full rounded-md border bg-background px-3 py-1 text-sm"
-              value={slotType}
-              onChange={(e) => setSlotType(e.target.value as 'fixed' | 'flexible')}
+              value={selectedProductId}
+              onChange={(e) => setSelectedProductId(e.target.value)}
             >
-              <option value="flexible">Flexible (tipo de complemento)</option>
-              <option value="fixed">Fijo (producto concreto)</option>
+              <option value="">— Selecciona producto —</option>
+              {otherProducts.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
             </select>
             <input
               type="number"
@@ -198,34 +179,11 @@ function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; pr
               onChange={(e) => setOrder(e.target.value)}
             />
           </div>
-          {slotType === 'flexible' ? (
-            <select
-              className="flex h-9 w-full rounded-md border bg-background px-3 py-1 text-sm"
-              value={selectedTypeId}
-              onChange={(e) => setSelectedTypeId(e.target.value)}
-            >
-              <option value="">— Selecciona tipo de complemento —</option>
-              {allTypes?.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          ) : (
-            <select
-              className="flex h-9 w-full rounded-md border bg-background px-3 py-1 text-sm"
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-            >
-              <option value="">— Selecciona producto —</option>
-              {otherProducts.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          )}
           <div className="flex gap-2">
             <Button
               size="sm"
               onClick={handleAdd}
-              disabled={addComboItem.isPending || (slotType === 'flexible' ? !selectedTypeId : !selectedProductId)}
+              disabled={addComboItem.isPending || !selectedProductId}
             >
               Añadir
             </Button>
@@ -239,11 +197,8 @@ function ComboItemsSection({ workspaceId, productId }: { workspaceId: number; pr
 
 // ─── Category Assignment Section ──────────────────────────────────────────────
 function CategorySection({ workspaceId, productId }: { workspaceId: number; productId: number }) {
-  const qc = useQueryClient()
-  const { data: categories } = useCategories(workspaceId)
-  const { data: detail } = useProductDetail(workspaceId, productId)
-  // We don't have a direct "product categories" endpoint, so track locally
   const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set())
+  const { data: categories } = useCategories(workspaceId)
 
   async function toggle(categoryId: number) {
     const next = new Set(assignedIds)
@@ -296,7 +251,7 @@ export function ProductsPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', description: '', price: 0, type: 'REGULAR', content: '', image_url: '', is_available: true },
+    defaultValues: { name: '', description: '', price: 0, type: 'REGULAR', content: '', imageUrl: '', isAvailable: true },
   })
 
   const watchedType = form.watch('type')
@@ -304,7 +259,7 @@ export function ProductsPage() {
   function openCreate() {
     setEditProduct(null)
     setDetailProductId(null)
-    form.reset({ name: '', description: '', price: 0, type: 'REGULAR', content: '', image_url: '', is_available: true })
+    form.reset({ name: '', description: '', price: 0, type: 'REGULAR', content: '', imageUrl: '', isAvailable: true })
     setFormOpen(true)
   }
 
@@ -317,8 +272,8 @@ export function ProductsPage() {
       price: product.price / 100,
       type: product.type,
       content: product.content ?? '',
-      image_url: product.image_url ?? '',
-      is_available: product.is_available,
+      imageUrl: product.imageUrl ?? '',
+      isAvailable: product.isAvailable,
     })
     setFormOpen(true)
   }
@@ -328,7 +283,7 @@ export function ProductsPage() {
       ...values,
       price: Math.round(values.price * 100),
       content: values.content || undefined,
-      image_url: values.image_url || undefined,
+      imageUrl: values.imageUrl || undefined,
     }
 
     if (editProduct) {
@@ -381,8 +336,8 @@ export function ProductsPage() {
           {products?.map((product) => (
             <div key={product.id} className="flex items-center gap-4 px-4 py-3 bg-background">
               <Switch
-                checked={product.is_available}
-                onCheckedChange={() => toggleAvailability.mutate({ id: product.id, is_available: !product.is_available })}
+                checked={product.isAvailable}
+                onCheckedChange={() => toggleAvailability.mutate({ id: product.id, isAvailable: !product.isAvailable })}
                 aria-label="Disponible"
               />
               <div className="flex-1 min-w-0">
@@ -466,10 +421,10 @@ export function ProductsPage() {
                   )}
 
                   <FormInput control={form.control} name="content" label="Contenido (opcional)" placeholder="Ej: 280g, 8 unidades, 500ml" />
-                  <FormInput control={form.control} name="image_url" label="URL de imagen (opcional)" type="url" placeholder="https://..." />
+                  <FormInput control={form.control} name="imageUrl" label="URL de imagen (opcional)" type="url" placeholder="https://..." />
                   <FormSwitch
                     control={form.control}
-                    name="is_available"
+                    name="isAvailable"
                     label="Disponible"
                     description="El producto aparece visible en la carta"
                   />
@@ -503,7 +458,7 @@ export function ProductsPage() {
                 {detailProductId ? (
                   <>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Añade slots al combo. Un slot fijo siempre incluye el mismo producto; un slot flexible deja al cliente elegir entre las opciones de un tipo de complemento.
+                      Añade slots fijos al combo. Cada slot incluye un producto específico que el cliente puede personalizar si tiene complementos.
                     </p>
                     <ComboItemsSection workspaceId={wid} productId={detailProductId} />
                   </>

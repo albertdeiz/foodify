@@ -11,6 +11,7 @@ import type {
   PublicMenuProduct,
   PublicProductDetail,
   PublicComplementType,
+  PublicComboItem,
   CartItem,
   CartComplement,
   CartComboSlot,
@@ -116,15 +117,34 @@ function ComplementSection({
 
 // ─── Combo Slot Section ───────────────────────────────────────────────────────
 
-function ComboSlotSection({ slot }: { slot: { product: { name: string } | null } }) {
+function ComboSlotSection({
+  slot,
+  complementSelections,
+  onComplementChange,
+}: {
+  slot: PublicComboItem
+  complementSelections: Record<number, CartSelectedOption[]>
+  onComplementChange: (typeId: number, options: CartSelectedOption[]) => void
+}) {
   if (!slot.product) return null
   return (
-    <div className="flex items-center justify-between rounded-lg border px-3 py-2.5 bg-muted/30">
-      <div>
-        <p className="text-xs text-muted-foreground mb-0.5">Incluido</p>
-        <p className="text-sm font-medium">{slot.product.name}</p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between rounded-lg border px-3 py-2.5 bg-muted/30">
+        <div>
+          <p className="text-xs text-muted-foreground mb-0.5">Incluido</p>
+          <p className="text-sm font-medium">{slot.product.name}</p>
+        </div>
+        <Badge variant="outline" className="text-xs">Fijo</Badge>
       </div>
-      <Badge variant="outline" className="text-xs">Fijo</Badge>
+      {slot.product.complement_types.map((ct) => (
+        <div key={ct.id} className="pl-3 border-l-2 border-muted">
+          <ComplementSection
+            ct={ct}
+            selected={complementSelections[ct.id] ?? []}
+            onChange={(opts) => onComplementChange(ct.id, opts)}
+          />
+        </div>
+      ))}
     </div>
   )
 }
@@ -149,11 +169,31 @@ function SheetContent({
     Object.fromEntries(product.complement_types.map((ct) => [ct.id, []]))
   )
 
+  // Per-slot complement selections: slotId → typeId → CartSelectedOption[]
+  const [slotComplementSelections, setSlotComplementSelections] = useState<
+    Record<number, Record<number, CartSelectedOption[]>>
+  >(() =>
+    Object.fromEntries(
+      product.combo_items.map((slot) => [
+        slot.id,
+        Object.fromEntries((slot.product?.complement_types ?? []).map((ct) => [ct.id, []])),
+      ]),
+    )
+  )
+
   const [quantity, setQuantity] = useState(1)
 
   // Reset when product changes
   useEffect(() => {
     setComplementSelections(Object.fromEntries(product.complement_types.map((ct) => [ct.id, []])))
+    setSlotComplementSelections(
+      Object.fromEntries(
+        product.combo_items.map((slot) => [
+          slot.id,
+          Object.fromEntries((slot.product?.complement_types ?? []).map((ct) => [ct.id, []])),
+        ]),
+      ),
+    )
     setQuantity(1)
   }, [product.id])
 
@@ -173,7 +213,19 @@ function SheetContent({
       max_selectable: ct.max_selectable,
       selectedOptions: complementSelections[ct.id] ?? [],
     })),
-    comboSlots: [],
+    comboSlots: product.combo_items.map((slot) => ({
+      slotId: slot.id,
+      order: slot.order,
+      fixedProduct: slot.product ? { id: slot.product.id, name: slot.product.name } : undefined,
+      complements: (slot.product?.complement_types ?? []).map((ct) => ({
+        typeId: ct.id,
+        typeName: ct.name,
+        required: ct.required,
+        min_selectable: ct.min_selectable,
+        max_selectable: ct.max_selectable,
+        selectedOptions: slotComplementSelections[slot.id]?.[ct.id] ?? [],
+      })),
+    })),
     quantity: 1,
   }
   const unitPrice = computeUnitPrice(tempItem)
@@ -181,10 +233,15 @@ function SheetContent({
   // Validation
   const requiredErrors = product.complement_types.filter((ct) => {
     if (!ct.required) return false
-    const count = (complementSelections[ct.id] ?? []).length
-    return count < (ct.min_selectable || 1)
+    return (complementSelections[ct.id] ?? []).length < (ct.min_selectable || 1)
   })
-  const isValid = requiredErrors.length === 0
+  const slotRequiredErrors = product.combo_items.flatMap((slot) =>
+    (slot.product?.complement_types ?? []).filter((ct) => {
+      if (!ct.required) return false
+      return (slotComplementSelections[slot.id]?.[ct.id] ?? []).length < (ct.min_selectable || 1)
+    }),
+  )
+  const isValid = requiredErrors.length === 0 && slotRequiredErrors.length === 0
 
   function handleAdd() {
     const cartComplements: CartComplement[] = product.complement_types.map((ct) => ({
@@ -200,6 +257,14 @@ function SheetContent({
       slotId: slot.id,
       order: slot.order,
       fixedProduct: slot.product ? { id: slot.product.id, name: slot.product.name } : undefined,
+      complements: (slot.product?.complement_types ?? []).map((ct) => ({
+        typeId: ct.id,
+        typeName: ct.name,
+        required: ct.required,
+        min_selectable: ct.min_selectable,
+        max_selectable: ct.max_selectable,
+        selectedOptions: slotComplementSelections[slot.id]?.[ct.id] ?? [],
+      })),
     }))
 
     addItem({
@@ -272,6 +337,13 @@ function SheetContent({
               <ComboSlotSection
                 key={slot.id}
                 slot={slot}
+                complementSelections={slotComplementSelections[slot.id] ?? {}}
+                onComplementChange={(typeId, opts) =>
+                  setSlotComplementSelections((prev) => ({
+                    ...prev,
+                    [slot.id]: { ...prev[slot.id], [typeId]: opts },
+                  }))
+                }
               />
             ))}
           </div>

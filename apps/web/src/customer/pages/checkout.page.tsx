@@ -41,9 +41,20 @@ function ItemSummary({ item }: { item: CartItem }) {
 
           {/* Combo slot lines */}
           {comboSlots.map((s) => (
-            <p key={s.slotId} className="text-xs text-muted-foreground mt-1">
-              Incluido: {s.fixedProduct!.name}
-            </p>
+            <div key={s.slotId} className="mt-1">
+              <p className="text-xs text-muted-foreground">Incluido: {s.fixedProduct!.name}</p>
+              {s.complements.filter((c) => c.selectedOptions.length > 0).map((c) => (
+                <p key={c.typeId} className="text-xs text-muted-foreground pl-3">
+                  <span className="font-medium">{c.typeName}:</span>{' '}
+                  {c.selectedOptions.map((o) => o.name).join(', ')}
+                  {c.selectedOptions.filter((o) => o.increment && o.price > 0).length > 0 && (
+                    <span className="ml-1 text-muted-foreground/70">
+                      (+{fmt(c.selectedOptions.filter((o) => o.increment).reduce((acc, o) => acc + o.price, 0))})
+                    </span>
+                  )}
+                </p>
+              ))}
+            </div>
           ))}
         </div>
 

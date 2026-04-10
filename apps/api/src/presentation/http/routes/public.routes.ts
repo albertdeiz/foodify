@@ -103,7 +103,22 @@ export async function publicRoutes(app: FastifyInstance) {
         combo_items: {
           orderBy: { order: 'asc' },
           include: {
-            product: true,
+            product: {
+              include: {
+                product_product_complement_types: {
+                  include: {
+                    product_complement_type: {
+                      include: {
+                        product_complements: {
+                          where: { is_disabled: false },
+                          orderBy: { id: 'asc' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -114,7 +129,22 @@ export async function publicRoutes(app: FastifyInstance) {
     return {
       ...base,
       complement_types: product_product_complement_types.map((r) => r.product_complement_type),
-      combo_items,
+      combo_items: combo_items.map((ci) => ({
+        id: ci.id,
+        order: ci.order,
+        product_id: ci.product_id,
+        product: ci.product
+          ? {
+              id: ci.product.id,
+              name: ci.product.name,
+              description: ci.product.description,
+              price: ci.product.price,
+              complement_types: ci.product.product_product_complement_types.map(
+                (r) => r.product_complement_type,
+              ),
+            }
+          : null,
+      })),
     }
   })
 }

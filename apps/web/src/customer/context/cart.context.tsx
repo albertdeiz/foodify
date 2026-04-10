@@ -4,11 +4,16 @@ import type { CartItem, CartComplement, CartComboSlot } from '../types'
 // ─── Price helpers ────────────────────────────────────────────────────────────
 
 export function computeUnitPrice(item: CartItem): number {
-  const adj = item.complements
+  const complementAdj = item.complements
     .flatMap((c) => c.selectedOptions)
     .filter((o) => o.increment)
     .reduce((sum, o) => sum + o.price, 0)
-  return item.menuPrice + adj
+  const slotAdj = item.comboSlots
+    .flatMap((s) => s.complements)
+    .flatMap((c) => c.selectedOptions)
+    .filter((o) => o.increment)
+    .reduce((sum, o) => sum + o.price, 0)
+  return item.menuPrice + complementAdj + slotAdj
 }
 
 export function computeItemTotal(item: CartItem): number {

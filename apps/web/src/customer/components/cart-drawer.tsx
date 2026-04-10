@@ -22,7 +22,12 @@ function CartItemRow({ item }: { item: CartItem }) {
 
   const comboLines = item.comboSlots
     .filter((s) => s.fixedProduct)
-    .map((s) => s.fixedProduct!.name)
+    .flatMap((s) => {
+      const slotComplements = s.complements
+        .filter((c) => c.selectedOptions.length > 0)
+        .map((c) => `  ${c.typeName}: ${c.selectedOptions.map((o) => o.name).join(', ')}`)
+      return [s.fixedProduct!.name, ...slotComplements]
+    })
 
   return (
     <div className="flex flex-col gap-2 py-3">

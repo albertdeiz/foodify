@@ -92,7 +92,7 @@ function CategoryNav({
   onSelect: (id: number) => void
 }) {
   return (
-    <div className="sticky top-0 z-10 bg-background border-b overflow-x-auto">
+    <div className="bg-background overflow-x-auto">
       <div className="flex gap-1 px-4 py-2 min-w-max">
         {categories.map((cat) => (
           <button
@@ -137,7 +137,9 @@ export function MenuPage() {
   // Scroll to category section
   function scrollToCategory(id: number) {
     setActiveCatId(id)
-    sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    const top = (sectionRefs.current[id]?.offsetTop ?? 0) - 94
+    window.scrollTo({ top, behavior: 'smooth' })
   }
 
   // Observe sections to update active category
@@ -179,29 +181,31 @@ export function MenuPage() {
   return (
     <div className="max-w-lg mx-auto relative">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-background sticky top-0 z-20">
-        <h1 className="font-semibold text-base truncate">{menu.name}</h1>
-        <button
-          onClick={() => setCartOpen(true)}
-          className="relative flex items-center gap-1.5 text-sm font-medium"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          {totalItems > 0 && (
-            <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-              {totalItems}
-            </span>
-          )}
-        </button>
-      </div>
+      <div className="border-b bg-background sticky top-0 z-20">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h1 className="font-semibold text-base truncate">{menu.name}</h1>
+          <button
+            onClick={() => setCartOpen(true)}
+            className="relative flex items-center gap-1.5 text-sm font-medium"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
 
-      {/* Category nav */}
-      {menu.categories.length > 1 && (
-        <CategoryNav
-          categories={menu.categories}
-          activeId={activeCatId}
-          onSelect={scrollToCategory}
-        />
-      )}
+        {/* Category nav */}
+        {menu.categories.length > 1 && (
+          <CategoryNav
+            categories={menu.categories}
+            activeId={activeCatId}
+            onSelect={scrollToCategory}
+          />
+        )}
+      </div>
 
       {/* Products by category */}
       <div className="pb-32">

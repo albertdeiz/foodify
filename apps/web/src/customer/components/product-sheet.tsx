@@ -283,7 +283,7 @@ function SheetContent({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="relative flex flex-col gap-5">
       {/* Image */}
       {product.image_url ? (
         <img src={product.image_url} alt={product.name} className="w-full h-44 object-cover rounded-xl" />
@@ -348,37 +348,38 @@ function SheetContent({
         </>
       )}
 
-      <Separator />
-
-      {/* Quantity + Add */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 border rounded-lg">
+      <div className="sticky bottom-0 bg-white flex flex-col gap-5">
+        <Separator />
+        {/* Quantity + Add */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 border rounded-lg">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="w-6 text-center text-sm font-semibold tabular-nums">{quantity}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => setQuantity((q) => q + 1)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="flex-1 gap-2"
+            disabled={!isValid}
+            onClick={handleAdd}
           >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <span className="w-6 text-center text-sm font-semibold tabular-nums">{quantity}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            onClick={() => setQuantity((q) => q + 1)}
-          >
-            <Plus className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4" />
+            Añadir · {fmt(unitPrice * quantity)}
           </Button>
         </div>
-        <Button
-          className="flex-1 gap-2"
-          disabled={!isValid}
-          onClick={handleAdd}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Añadir · {fmt(unitPrice * quantity)}
-        </Button>
       </div>
     </div>
   )

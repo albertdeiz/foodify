@@ -12,6 +12,9 @@ import { Form } from '@/shared/components/ui/form'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { FormInput, FormSwitch } from '@/shared/components/form'
 import { cn } from '@/shared/lib/utils'
+import { formatPriceAdjust } from '@/shared/lib/format-price'
+import { DEFAULT_CURRENCY } from '@/shared/lib/currency'
+import { useWorkspace } from '@/features/workspaces/hooks/use-workspaces'
 import {
   useComplementTypes,
   useCreateComplementType,
@@ -39,22 +42,17 @@ const complementSchema = z.object({
 })
 type ComplementFormValues = z.infer<typeof complementSchema>
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatPrice(cents: number) {
-  if (cents === 0) return 'Gratis'
-  const sign = cents > 0 ? '+' : ''
-  return `${sign}${(cents / 100).toFixed(2)} €`
-}
-
 // ─── Options Section ───────────────────────────────────────────────────────────
 function OptionsSection({
   workspaceId,
   typeId,
   options,
+  currency,
 }: {
   workspaceId: number
   typeId: number
   options: ProductComplement[]
+  currency: string
 }) {
   const addComplement = useAddComplement(workspaceId)
   const updateComplement = useUpdateComplement(workspaceId)
@@ -116,7 +114,7 @@ function OptionsSection({
             <p className={cn('text-sm font-medium truncate', c.isDisabled && 'line-through text-muted-foreground')}>
               {c.name}
             </p>
-            <p className="text-xs text-muted-foreground">{formatPrice(c.price)}</p>
+            <p className="text-xs text-muted-foreground">{formatPriceAdjust(c.price, currency)}</p>
           </div>
           {c.isDisabled && (
             <Badge variant="secondary" className="text-xs shrink-0">Desactivada</Badge>
@@ -191,6 +189,8 @@ function OptionsSection({
 export function ComplementTypesPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const wid = Number(workspaceId)
+  const { data: workspace } = useWorkspace(wid)
+  const currency = workspace?.currency ?? DEFAULT_CURRENCY
 
   const { data: types, isLoading } = useComplementTypes(wid)
   const createType = useCreateComplementType(wid)
@@ -366,6 +366,7 @@ export function ComplementTypesPage() {
                   workspaceId={wid}
                   typeId={editType.id}
                   options={editType.productComplements}
+                  currency={currency}
                 />
               </TabsContent>
             )}

@@ -4,14 +4,11 @@ import { ChevronLeft, ShoppingBag, CheckCircle2, Minus, Plus, Trash2 } from 'luc
 import { Button } from '@/shared/components/ui/button'
 import { Separator } from '@/shared/components/ui/separator'
 import { useCart, computeUnitPrice, computeItemTotal, computeCartTotal } from '../context/cart.context'
+import { formatPrice } from '@/shared/lib/format-price'
 import type { CartItem } from '../types'
 
-function fmt(cents: number) {
-  return (cents / 100).toFixed(2) + ' €'
-}
-
 function ItemSummary({ item }: { item: CartItem }) {
-  const { updateQuantity, removeItem } = useCart()
+  const { updateQuantity, removeItem, currency } = useCart()
   const unitPrice = computeUnitPrice(item)
   const totalPrice = computeItemTotal(item)
 
@@ -32,7 +29,7 @@ function ItemSummary({ item }: { item: CartItem }) {
                 {c.selectedOptions.map((o) => o.name).join(', ')}
                 {c.selectedOptions.filter((o) => o.increment && o.price > 0).length > 0 && (
                   <span className="ml-1 text-muted-foreground/70">
-                    (+{fmt(c.selectedOptions.filter((o) => o.increment).reduce((s, o) => s + o.price, 0))})
+                    (+{formatPrice(c.selectedOptions.filter((o) => o.increment).reduce((s, o) => s + o.price, 0), currency)})
                   </span>
                 )}
               </p>
@@ -49,7 +46,7 @@ function ItemSummary({ item }: { item: CartItem }) {
                   {c.selectedOptions.map((o) => o.name).join(', ')}
                   {c.selectedOptions.filter((o) => o.increment && o.price > 0).length > 0 && (
                     <span className="ml-1 text-muted-foreground/70">
-                      (+{fmt(c.selectedOptions.filter((o) => o.increment).reduce((acc, o) => acc + o.price, 0))})
+                      (+{formatPrice(c.selectedOptions.filter((o) => o.increment).reduce((acc, o) => acc + o.price, 0), currency)})
                     </span>
                   )}
                 </p>
@@ -59,9 +56,9 @@ function ItemSummary({ item }: { item: CartItem }) {
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-sm font-bold tabular-nums">{fmt(totalPrice)}</p>
+          <p className="text-sm font-bold tabular-nums">{formatPrice(totalPrice, currency)}</p>
           {item.quantity > 1 && (
-            <p className="text-xs text-muted-foreground tabular-nums">{fmt(unitPrice)} × {item.quantity}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">{formatPrice(unitPrice, currency)} × {item.quantity}</p>
           )}
         </div>
       </div>
@@ -97,7 +94,7 @@ function ItemSummary({ item }: { item: CartItem }) {
 export function CheckoutPage() {
   const { slug, menuId } = useParams<{ slug: string; menuId: string }>()
   const navigate = useNavigate()
-  const { state, clearCart } = useCart()
+  const { state, clearCart, currency } = useCart()
   const [confirmed, setConfirmed] = useState(false)
 
   const total = computeCartTotal(state.items)
@@ -168,18 +165,18 @@ export function CheckoutPage() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Subtotal</span>
-              <span className="tabular-nums">{fmt(total)}</span>
+              <span className="tabular-nums">{formatPrice(total, currency)}</span>
             </div>
             <div className="flex justify-between font-bold text-base">
               <span>Total</span>
-              <span className="tabular-nums">{fmt(total)}</span>
+              <span className="tabular-nums">{formatPrice(total, currency)}</span>
             </div>
           </div>
 
           {/* Confirm button */}
           <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 py-4 bg-background border-t">
             <Button className="w-full h-12 text-base" onClick={() => setConfirmed(true)}>
-              Confirmar pedido · {fmt(total)}
+              Confirmar pedido · {formatPrice(total, currency)}
             </Button>
           </div>
         </>

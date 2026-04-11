@@ -1,3 +1,5 @@
+import type { Currency } from '@/shared/lib/currency'
+
 export type PublicProductType = 'REGULAR' | 'COMPLEMENTED' | 'COMBO'
 
 export interface PublicWorkspace {
@@ -5,6 +7,7 @@ export interface PublicWorkspace {
   name: string
   slug: string
   address: string
+  currency: Currency
   menus: Array<{ id: number; name: string }>
 }
 

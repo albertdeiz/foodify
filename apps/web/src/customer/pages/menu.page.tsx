@@ -3,15 +3,13 @@ import { useParams } from 'react-router-dom'
 import { ShoppingCart, ImageOff, ChevronRight } from 'lucide-react'
 import { Badge } from '@/shared/components/ui/badge'
 import { cn } from '@/shared/lib/utils'
-import { usePublicMenu } from '../hooks/use-public'
+import { usePublicMenu, useRestaurant } from '../hooks/use-public'
 import { useCart } from '../context/cart.context'
+import { DEFAULT_CURRENCY } from '@/shared/lib/currency'
 import { ProductSheet } from '../components/product-sheet'
 import { CartDrawer } from '../components/cart-drawer'
+import { formatPrice } from '@/shared/lib/format-price'
 import type { PublicMenuProduct, PublicMenuCategory } from '../types'
-
-function fmt(cents: number) {
-  return (cents / 100).toFixed(2) + ' €'
-}
 
 const TYPE_BADGE: Record<string, 'default' | 'secondary' | 'outline'> = {
   REGULAR: 'outline',
@@ -24,9 +22,11 @@ const TYPE_BADGE: Record<string, 'default' | 'secondary' | 'outline'> = {
 function ProductCard({
   product,
   onClick,
+  currency,
 }: {
   product: PublicMenuProduct
   onClick: () => void
+  currency: string
 }) {
   const hasSpecialPrice = product.price !== product.basePrice
 
@@ -67,10 +67,10 @@ function ProductCard({
       </div>
       <div className="shrink-0 text-right flex items-center gap-1">
         <div>
-          <p className="text-sm font-bold tabular-nums">{fmt(product.price)}</p>
+          <p className="text-sm font-bold tabular-nums">{formatPrice(product.price, currency)}</p>
           {hasSpecialPrice && (
             <p className="text-xs text-muted-foreground line-through tabular-nums">
-              {fmt(product.basePrice)}
+              {formatPrice(product.basePrice, currency)}
             </p>
           )}
         </div>
@@ -120,15 +120,16 @@ export function MenuPage() {
   const mid = Number(menuId)
 
   const { data: menu, isLoading } = usePublicMenu(slug!, mid)
-  const { setMenu, totalItems } = useCart()
+  const { data: restaurant } = useRestaurant(slug!)
+  const { setMenu, totalItems, currency } = useCart()
   const [selectedProduct, setSelectedProduct] = useState<PublicMenuProduct | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [activeCatId, setActiveCatId] = useState<number | null>(null)
   const sectionRefs = useRef<Record<number, HTMLElement | null>>({})
 
   useEffect(() => {
-    if (slug && mid) setMenu(slug, mid)
-  }, [slug, mid])
+    if (slug && mid) setMenu(slug, mid, restaurant?.currency ?? DEFAULT_CURRENCY)
+  }, [slug, mid, restaurant?.currency])
 
   useEffect(() => {
     if (menu?.categories.length) setActiveCatId(menu.categories[0].id)
@@ -224,6 +225,7 @@ export function MenuPage() {
                   key={product.id}
                   product={product}
                   onClick={() => setSelectedProduct(product)}
+                  currency={currency}
                 />
               ))}
               {cat.products.length === 0 && (

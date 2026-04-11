@@ -27,14 +27,16 @@ model User {
 // ─── Workspace ────────────────────────────────────────────────────────────────
 // Representa un restaurante. Un usuario puede ser miembro de varios.
 //
-// name    — nombre visible del restaurante
-// slug    — identificador único para la URL pública (ej: /burgerpizza-co)
-// address — dirección física, de cara a la ficha pública
+// name     — nombre visible del restaurante
+// slug     — identificador único para la URL pública (ej: /burgerpizza-co)
+// address  — dirección física, de cara a la ficha pública
+// currency — código ISO 4217 de la moneda (ej: EUR, USD, MXN)
 model Workspace {
   id                       Int                     @id @default(autoincrement())
   name                     String
   slug                     String                  @unique
   address                  String
+  currency                 String                  @default("EUR")
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
   user_workspaces          UserWorkspace[]

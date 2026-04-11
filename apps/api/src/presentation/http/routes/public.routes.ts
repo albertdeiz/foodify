@@ -11,6 +11,7 @@ export async function publicRoutes(app: FastifyInstance) {
         name: true,
         slug: true,
         address: true,
+        currency: true,
         menus: {
           where: { is_active: true },
           select: { id: true, name: true },

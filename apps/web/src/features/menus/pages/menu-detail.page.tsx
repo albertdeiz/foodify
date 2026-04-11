@@ -7,19 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/compo
 import { cn } from '@/shared/lib/utils'
 import { useMenuContent } from '../hooks/use-menus'
 import { useProductDetail } from '@/features/products/hooks/use-products'
+import { useWorkspace } from '@/features/workspaces/hooks/use-workspaces'
+import { DEFAULT_CURRENCY } from '@/shared/lib/currency'
+import { formatPrice, formatPriceAdjust } from '@/shared/lib/format-price'
 import type { MenuProduct } from '../types'
 import type { ProductWithDetails, ComboItem } from '@/features/products/types'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2) + ' €'
-}
-
-function formatPriceAdjust(cents: number) {
-  if (cents === 0) return 'Gratis'
-  const sign = cents > 0 ? '+' : ''
-  return `${sign}${(cents / 100).toFixed(2)} €`
-}
 
 const TYPE_LABEL: Record<string, string> = {
   REGULAR: 'Regular',
@@ -40,12 +32,14 @@ function ProductDetailDialog({
   menuPrice,
   basePrice,
   onClose,
+  currency,
 }: {
   workspaceId: number
   productId: number | null
   menuPrice: number
   basePrice: number
   onClose: () => void
+  currency: string
 }) {
   const { data: product, isLoading } = useProductDetail(workspaceId, productId)
   const hasSpecialPrice = menuPrice !== basePrice
@@ -61,6 +55,7 @@ function ProductDetailDialog({
             menuPrice={menuPrice}
             basePrice={basePrice}
             hasSpecialPrice={hasSpecialPrice}
+            currency={currency}
           />
         )}
       </DialogContent>
@@ -73,11 +68,13 @@ function ProductDetailContent({
   menuPrice,
   basePrice,
   hasSpecialPrice,
+  currency,
 }: {
   product: ProductWithDetails
   menuPrice: number
   basePrice: number
   hasSpecialPrice: boolean
+  currency: string
 }) {
   return (
     <>
@@ -96,10 +93,10 @@ function ProductDetailContent({
           </div>
           {/* Precio */}
           <div className="text-right shrink-0">
-            <p className="text-lg font-bold tabular-nums">{formatPrice(menuPrice)}</p>
+            <p className="text-lg font-bold tabular-nums">{formatPrice(menuPrice, currency)}</p>
             {hasSpecialPrice && (
               <p className="text-xs text-muted-foreground line-through tabular-nums">
-                {formatPrice(basePrice)}
+                {formatPrice(basePrice, currency)}
               </p>
             )}
             {hasSpecialPrice && (
@@ -155,7 +152,7 @@ function ProductDetailContent({
                     >
                       <span className="text-sm">{c.name}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatPriceAdjust(c.price)}
+                        {formatPriceAdjust(c.price, currency)}
                       </span>
                     </div>
                   ))}
@@ -176,7 +173,7 @@ function ProductDetailContent({
             Compuesto por
           </p>
           {product.comboItems.map((item) => (
-            <ComboItemRow key={item.id} item={item} />
+            <ComboItemRow key={item.id} item={item} currency={currency} />
           ))}
         </div>
       )}
@@ -184,7 +181,7 @@ function ProductDetailContent({
   )
 }
 
-function ComboItemRow({ item }: { item: ComboItem }) {
+function ComboItemRow({ item, currency }: { item: ComboItem; currency: string }) {
   if (!item.product) return null
   return (
     <div className="rounded-md border px-3 py-2">
@@ -198,7 +195,7 @@ function ComboItemRow({ item }: { item: ComboItem }) {
         </div>
         <Badge variant="outline" className="text-xs shrink-0">Fijo</Badge>
         <span className="text-xs tabular-nums text-muted-foreground shrink-0">
-          {formatPrice(item.product.price)}
+          {formatPrice(item.product.price, currency)}
         </span>
       </div>
     </div>
@@ -209,9 +206,11 @@ function ComboItemRow({ item }: { item: ComboItem }) {
 function ProductRow({
   product,
   onClick,
+  currency,
 }: {
   product: MenuProduct
   onClick: () => void
+  currency: string
 }) {
   const hasSpecialPrice = product.price !== product.basePrice
 
@@ -261,10 +260,10 @@ function ProductRow({
       {/* Precio + chevron */}
       <div className="text-right shrink-0 flex items-center gap-1">
         <div>
-          <p className="text-sm font-semibold tabular-nums">{formatPrice(product.price)}</p>
+          <p className="text-sm font-semibold tabular-nums">{formatPrice(product.price, currency)}</p>
           {hasSpecialPrice && (
             <p className="text-xs text-muted-foreground line-through tabular-nums">
-              {formatPrice(product.basePrice)}
+              {formatPrice(product.basePrice, currency)}
             </p>
           )}
         </div>
@@ -279,6 +278,8 @@ export function MenuDetailPage() {
   const { workspaceId, menuId } = useParams<{ workspaceId: string; menuId: string }>()
   const wid = Number(workspaceId)
   const mid = Number(menuId)
+  const { data: workspace } = useWorkspace(wid)
+  const currency = workspace?.currency ?? DEFAULT_CURRENCY
 
   const { data: menu, isLoading } = useMenuContent(wid, mid)
 
@@ -345,6 +346,7 @@ export function MenuDetailPage() {
                       key={product.id}
                       product={product}
                       onClick={() => setSelectedProduct(product)}
+                      currency={currency}
                     />
                   ))}
                 </div>
@@ -361,6 +363,7 @@ export function MenuDetailPage() {
         menuPrice={selectedProduct?.price ?? 0}
         basePrice={selectedProduct?.basePrice ?? 0}
         onClose={() => setSelectedProduct(null)}
+        currency={currency}
       />
     </div>
   )

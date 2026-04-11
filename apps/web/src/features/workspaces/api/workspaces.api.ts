@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/lib/api-client'
+import type { Currency } from '@/shared/lib/currency'
 import type { Workspace, CreateWorkspaceInput } from '../types'
 
 // ─── Raw API response types ────────────────────────────────────────────────────
@@ -8,6 +9,7 @@ interface ApiWorkspace {
   name: string
   slug: string
   address: string
+  currency: string
   created_at: string
   updated_at: string
 }
@@ -20,6 +22,7 @@ function toWorkspace(r: ApiWorkspace): Workspace {
     name: r.name,
     slug: r.slug,
     address: r.address,
+    currency: r.currency as Currency,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }

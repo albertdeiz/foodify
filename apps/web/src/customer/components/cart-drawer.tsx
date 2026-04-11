@@ -4,16 +4,13 @@ import { Button } from '@/shared/components/ui/button'
 import { Separator } from '@/shared/components/ui/separator'
 import { cn } from '@/shared/lib/utils'
 import { useCart, computeUnitPrice, computeItemTotal, computeCartTotal } from '../context/cart.context'
+import { formatPrice } from '@/shared/lib/format-price'
 import type { CartItem } from '../types'
-
-function fmt(cents: number) {
-  return (cents / 100).toFixed(2) + ' €'
-}
 
 // ─── Single cart item ─────────────────────────────────────────────────────────
 
 function CartItemRow({ item }: { item: CartItem }) {
-  const { updateQuantity, removeItem } = useCart()
+  const { updateQuantity, removeItem, currency } = useCart()
   const unitPrice = computeUnitPrice(item)
 
   const complementLines = item.complements
@@ -59,9 +56,9 @@ function CartItemRow({ item }: { item: CartItem }) {
 
         {/* Price + delete */}
         <div className="text-right shrink-0 flex flex-col items-end gap-1">
-          <span className="text-sm font-semibold tabular-nums">{fmt(computeItemTotal(item))}</span>
+          <span className="text-sm font-semibold tabular-nums">{formatPrice(computeItemTotal(item), currency)}</span>
           {item.quantity > 1 && (
-            <span className="text-xs text-muted-foreground tabular-nums">{fmt(unitPrice)} c/u</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{formatPrice(unitPrice, currency)} c/u</span>
           )}
           <button
             onClick={() => removeItem(item.uid)}
@@ -84,7 +81,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { slug, menuId } = useParams<{ slug: string; menuId: string }>()
-  const { state, totalItems, clearCart } = useCart()
+  const { state, totalItems, clearCart, currency } = useCart()
   const navigate = useNavigate()
   const total = computeCartTotal(state.items)
 
@@ -143,7 +140,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           <div className="border-t px-5 py-4 flex flex-col gap-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Total</span>
-              <span className="font-bold text-base tabular-nums">{fmt(total)}</span>
+              <span className="font-bold text-base tabular-nums">{formatPrice(total, currency)}</span>
             </div>
             <Button
               className="w-full"

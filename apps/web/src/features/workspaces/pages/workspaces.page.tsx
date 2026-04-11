@@ -9,13 +9,15 @@ import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
 import { Form } from '@/shared/components/ui/form'
-import { FormInput } from '@/shared/components/form'
+import { FormInput, FormSelect } from '@/shared/components/form'
+import { CURRENCIES, DEFAULT_CURRENCY } from '@/shared/lib/currency'
 import { useWorkspaces, useCreateWorkspace } from '../hooks/use-workspaces'
 
 const schema = z.object({
   name: z.string().min(1, 'Requerido'),
   slug: z.string().min(1, 'Requerido').regex(/^[a-z0-9-]+$/, 'Solo minúsculas, números y guiones'),
   address: z.string().min(1, 'Requerido'),
+  currency: z.string().min(1, 'Requerido'),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -32,7 +34,7 @@ export function WorkspacesPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', slug: '', address: '' },
+    defaultValues: { name: '', slug: '', address: '', currency: DEFAULT_CURRENCY },
   })
 
   const nameValue = form.watch('name')
@@ -88,6 +90,12 @@ export function WorkspacesPage() {
                   description="Identificador único para el QR. Solo minúsculas y guiones."
                 />
                 <FormInput control={form.control} name="address" label="Dirección" placeholder="Calle Mayor 1" />
+                <FormSelect
+                  control={form.control}
+                  name="currency"
+                  label="Moneda"
+                  options={CURRENCIES}
+                />
                 <Button type="submit" disabled={createWorkspace.isPending}>
                   {createWorkspace.isPending ? 'Creando...' : 'Crear restaurante'}
                 </Button>
@@ -124,8 +132,9 @@ export function WorkspacesPage() {
                   {workspace.address}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground font-mono">/{workspace.slug}</span>
+                <span className="text-xs text-muted-foreground">{workspace.currency}</span>
               </CardContent>
             </Card>
           ))}

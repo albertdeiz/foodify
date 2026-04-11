@@ -18,6 +18,9 @@ import { useCategories } from '@/features/categories/hooks/use-categories'
 import { useComplementTypes } from '@/features/complement-types/hooks/use-complement-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { productKeys } from '../hooks/use-products'
+import { useWorkspace } from '@/features/workspaces/hooks/use-workspaces'
+import { DEFAULT_CURRENCY } from '@/shared/lib/currency'
+import { formatPrice } from '@/shared/lib/format-price'
 import type { Product } from '../types'
 
 const schema = z.object({
@@ -42,10 +45,6 @@ const TYPE_BADGE: Record<string, 'default' | 'secondary' | 'outline'> = {
   REGULAR: 'outline',
   COMPLEMENTED: 'secondary',
   COMBO: 'default',
-}
-
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2)
 }
 
 // ─── Complement Types Section ─────────────────────────────────────────────────
@@ -240,6 +239,8 @@ export function ProductsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
   const wid = Number(workspaceId)
   const qc = useQueryClient()
+  const { data: workspace } = useWorkspace(wid)
+  const currency = workspace?.currency ?? DEFAULT_CURRENCY
 
   const { data: products, isLoading } = useProducts(wid)
   const createProduct = useCreateProduct(wid)
@@ -347,7 +348,7 @@ export function ProductsPage() {
               <Badge variant={TYPE_BADGE[product.type] ?? 'outline'} className="shrink-0 text-xs">
                 {product.type}
               </Badge>
-              <span className="text-sm font-medium shrink-0">{formatPrice(product.price)} €</span>
+              <span className="text-sm font-medium shrink-0">{formatPrice(product.price, currency)}</span>
               <Button variant="ghost" size="icon" onClick={() => openEdit(product)}>
                 <Pencil className="h-4 w-4" />
               </Button>

@@ -7,6 +7,7 @@ import { Separator } from '@/shared/components/ui/separator'
 import { cn } from '@/shared/lib/utils'
 import { usePublicProductDetail } from '../hooks/use-public'
 import { useCart, computeUnitPrice } from '../context/cart.context'
+import { formatPrice, formatPriceAdjust } from '@/shared/lib/format-price'
 import type {
   PublicMenuProduct,
   PublicProductDetail,
@@ -20,16 +21,6 @@ import type {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmt(cents: number) {
-  return (cents / 100).toFixed(2) + ' €'
-}
-
-function fmtAdj(cents: number) {
-  if (cents === 0) return 'Gratis'
-  const sign = cents > 0 ? '+' : ''
-  return `${sign}${(cents / 100).toFixed(2)} €`
-}
-
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36)
 }
@@ -40,10 +31,12 @@ function ComplementSection({
   ct,
   selected,
   onChange,
+  currency,
 }: {
   ct: PublicComplementType
   selected: CartSelectedOption[]
   onChange: (options: CartSelectedOption[]) => void
+  currency: string
 }) {
   const isMulti = ct.maxSelectable > 1
   const selectedIds = new Set(selected.map((o) => o.id))
@@ -106,7 +99,7 @@ function ComplementSection({
                 </span>
                 <span className="text-sm">{opt.name}</span>
               </div>
-              <span className="text-xs text-muted-foreground tabular-nums">{fmtAdj(opt.price)}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{formatPriceAdjust(opt.price, currency)}</span>
             </button>
           )
         })}
@@ -121,10 +114,12 @@ function ComboSlotSection({
   slot,
   complementSelections,
   onComplementChange,
+  currency,
 }: {
   slot: PublicComboItem
   complementSelections: Record<number, CartSelectedOption[]>
   onComplementChange: (typeId: number, options: CartSelectedOption[]) => void
+  currency: string
 }) {
   if (!slot.product) return null
   return (
@@ -142,6 +137,7 @@ function ComboSlotSection({
             ct={ct}
             selected={complementSelections[ct.id] ?? []}
             onChange={(opts) => onComplementChange(ct.id, opts)}
+            currency={currency}
           />
         </div>
       ))}
@@ -162,7 +158,7 @@ function SheetContent({
   slug: string
   onAdded: () => void
 }) {
-  const { addItem } = useCart()
+  const { addItem, currency } = useCart()
 
   // Complement selections: typeId → CartSelectedOption[]
   const [complementSelections, setComplementSelections] = useState<Record<number, CartSelectedOption[]>>(() =>
@@ -292,10 +288,10 @@ function SheetContent({
       <DialogHeader>
         <div className="flex items-start justify-between gap-3">
           <DialogTitle className="text-lg leading-snug flex-1">{product.name}</DialogTitle>
-          <span className="text-lg font-bold tabular-nums shrink-0">{fmt(unitPrice)}</span>
+          <span className="text-lg font-bold tabular-nums shrink-0">{formatPrice(unitPrice, currency)}</span>
         </div>
         {unitPrice !== menuPrice && (
-          <p className="text-xs text-muted-foreground">Base: {fmt(menuPrice)} + opciones</p>
+          <p className="text-xs text-muted-foreground">Base: {formatPrice(menuPrice, currency)} + opciones</p>
         )}
       </DialogHeader>
 
@@ -319,6 +315,7 @@ function SheetContent({
                 onChange={(opts) =>
                   setComplementSelections((prev) => ({ ...prev, [ct.id]: opts }))
                 }
+                currency={currency}
               />
             ))}
           </div>
@@ -344,6 +341,7 @@ function SheetContent({
                     [slot.id]: { ...prev[slot.id], [typeId]: opts },
                   }))
                 }
+                currency={currency}
               />
             ))}
           </div>
@@ -379,7 +377,7 @@ function SheetContent({
             onClick={handleAdd}
           >
             <ShoppingCart className="h-4 w-4" />
-            Añadir · {fmt(unitPrice * quantity)}
+            Añadir · {formatPrice(unitPrice * quantity, currency)}
           </Button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react'
+import { DEFAULT_CURRENCY, type Currency } from '@/shared/lib/currency'
 import type { CartItem, CartComplement, CartComboSlot } from '../types'
 
 // ─── Price helpers ────────────────────────────────────────────────────────────
@@ -29,11 +30,12 @@ export function computeCartTotal(items: CartItem[]): number {
 interface CartState {
   slug: string
   menuId: number | null
+  currency: Currency
   items: CartItem[]
 }
 
 type CartAction =
-  | { type: 'SET_MENU'; slug: string; menuId: number }
+  | { type: 'SET_MENU'; slug: string; menuId: number; currency: Currency }
   | { type: 'ADD_ITEM'; item: CartItem }
   | { type: 'REMOVE_ITEM'; uid: string }
   | { type: 'UPDATE_QUANTITY'; uid: string; quantity: number }
@@ -42,8 +44,11 @@ type CartAction =
 function reducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'SET_MENU':
-      if (state.slug === action.slug && state.menuId === action.menuId) return state
-      return { slug: action.slug, menuId: action.menuId, items: [] }
+      if (state.slug === action.slug && state.menuId === action.menuId) {
+        if (state.currency === action.currency) return state
+        return { ...state, currency: action.currency }
+      }
+      return { slug: action.slug, menuId: action.menuId, currency: action.currency, items: [] }
     case 'ADD_ITEM':
       return { ...state, items: [...state.items, action.item] }
     case 'REMOVE_ITEM':
@@ -66,7 +71,8 @@ function reducer(state: CartState, action: CartAction): CartState {
 
 interface CartContextValue {
   state: CartState
-  setMenu: (slug: string, menuId: number) => void
+  currency: Currency
+  setMenu: (slug: string, menuId: number, currency: Currency) => void
   addItem: (item: CartItem) => void
   removeItem: (uid: string) => void
   updateQuantity: (uid: string, quantity: number) => void
@@ -78,7 +84,7 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null)
 const STORAGE_KEY = 'foodify_cart_v1'
 
-const initialState: CartState = { slug: '', menuId: null, items: [] }
+const initialState: CartState = { slug: '', menuId: null, currency: DEFAULT_CURRENCY, items: [] }
 
 function loadState(): CartState {
   try {
@@ -103,7 +109,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         state,
-        setMenu: (slug, menuId) => dispatch({ type: 'SET_MENU', slug, menuId }),
+        currency: state.currency,
+        setMenu: (slug, menuId, currency) => dispatch({ type: 'SET_MENU', slug, menuId, currency }),
         addItem: (item) => dispatch({ type: 'ADD_ITEM', item }),
         removeItem: (uid) => dispatch({ type: 'REMOVE_ITEM', uid }),
         updateQuantity: (uid, quantity) => dispatch({ type: 'UPDATE_QUANTITY', uid, quantity }),

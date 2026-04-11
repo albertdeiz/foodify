@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import type { IWorkspaceRepository } from '../../../domain/repositories/workspace.repository'
-import type { Workspace, CreateWorkspaceInput, UpdateWorkspaceInput } from '../../../domain/entities/workspace.entity'
+import type { Workspace, WorkspaceWithMenus, CreateWorkspaceInput, UpdateWorkspaceInput } from '../../../domain/entities/workspace.entity'
 
 export class PrismaWorkspaceRepository implements IWorkspaceRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -11,6 +11,18 @@ export class PrismaWorkspaceRepository implements IWorkspaceRepository {
 
   async findBySlug(slug: string): Promise<Workspace | null> {
     return this.prisma.workspace.findUnique({ where: { slug } })
+  }
+
+  async findBySlugWithActiveMenus(slug: string): Promise<WorkspaceWithMenus | null> {
+    return this.prisma.workspace.findUnique({
+      where: { slug },
+      include: {
+        menus: {
+          where: { is_active: true },
+          select: { id: true, name: true },
+        },
+      },
+    })
   }
 
   async findByUserId(userId: number): Promise<Workspace[]> {

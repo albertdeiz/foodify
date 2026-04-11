@@ -1,12 +1,16 @@
 import type { FastifyInstance } from 'fastify'
 import { CreateMenuUseCase } from '../../../application/use-cases/menu/create-menu.use-case'
 import { GetMenusUseCase } from '../../../application/use-cases/menu/get-menus.use-case'
+import { GetMenuUseCase } from '../../../application/use-cases/menu/get-menu.use-case'
+import { UpdateMenuUseCase } from '../../../application/use-cases/menu/update-menu.use-case'
+import { DeleteMenuUseCase } from '../../../application/use-cases/menu/delete-menu.use-case'
+import { AssignCategoryToMenuUseCase } from '../../../application/use-cases/menu/assign-category.use-case'
+import { RemoveCategoryFromMenuUseCase } from '../../../application/use-cases/menu/remove-category.use-case'
+import { SetProductPriceUseCase } from '../../../application/use-cases/menu/set-product-price.use-case'
+import { RemoveProductPriceUseCase } from '../../../application/use-cases/menu/remove-product-price.use-case'
 import { PrismaMenuRepository } from '../../../infrastructure/database/repositories/prisma-menu.repository'
-import { createMenuSchema, updateMenuSchema } from '../schemas/menu.schema'
+import { createMenuSchema, updateMenuSchema, menuProductPriceSchema } from '../schemas/menu.schema'
 import { authMiddleware } from '../middleware/auth.middleware'
-import { z } from 'zod'
-
-const priceSchema = z.object({ price: z.number().int().min(0) })
 
 export async function menuRoutes(app: FastifyInstance) {
   const repository = new PrismaMenuRepository(app.prisma)
@@ -20,7 +24,7 @@ export async function menuRoutes(app: FastifyInstance) {
 
   app.get('/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    const menu = await repository.findByIdWithContent(Number(id))
+    const menu = await new GetMenuUseCase(repository).execute(Number(id))
     if (!menu) return reply.status(404).send({ error: 'Menu not found' })
     return menu
   })
@@ -38,12 +42,12 @@ export async function menuRoutes(app: FastifyInstance) {
   app.patch('/:id', { preHandler: authMiddleware }, async (request) => {
     const { id } = request.params as { id: string }
     const body = updateMenuSchema.parse(request.body)
-    return repository.update(Number(id), body)
+    return new UpdateMenuUseCase(repository).execute(Number(id), body)
   })
 
   app.delete('/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    await repository.delete(Number(id))
+    await new DeleteMenuUseCase(repository).execute(Number(id))
     return reply.status(204).send()
   })
 
@@ -51,13 +55,13 @@ export async function menuRoutes(app: FastifyInstance) {
 
   app.post('/:id/categories/:categoryId', { preHandler: authMiddleware }, async (request, reply) => {
     const { id, categoryId } = request.params as { id: string; categoryId: string }
-    await repository.assignCategory(Number(id), Number(categoryId))
+    await new AssignCategoryToMenuUseCase(repository).execute(Number(id), Number(categoryId))
     return reply.status(204).send()
   })
 
   app.delete('/:id/categories/:categoryId', { preHandler: authMiddleware }, async (request, reply) => {
     const { id, categoryId } = request.params as { id: string; categoryId: string }
-    await repository.removeCategory(Number(id), Number(categoryId))
+    await new RemoveCategoryFromMenuUseCase(repository).execute(Number(id), Number(categoryId))
     return reply.status(204).send()
   })
 
@@ -67,20 +71,14 @@ export async function menuRoutes(app: FastifyInstance) {
 
   app.put('/:id/products/:productId/price', { preHandler: authMiddleware }, async (request, reply) => {
     const { id, productId } = request.params as { id: string; productId: string }
-    const { price } = priceSchema.parse(request.body)
-    await app.prisma.menuProductPrice.upsert({
-      where: { menu_id_product_id: { menu_id: Number(id), product_id: Number(productId) } },
-      create: { menu_id: Number(id), product_id: Number(productId), price },
-      update: { price },
-    })
+    const { price } = menuProductPriceSchema.parse(request.body)
+    await new SetProductPriceUseCase(repository).execute(Number(id), Number(productId), price)
     return reply.status(204).send()
   })
 
   app.delete('/:id/products/:productId/price', { preHandler: authMiddleware }, async (request, reply) => {
     const { id, productId } = request.params as { id: string; productId: string }
-    await app.prisma.menuProductPrice.delete({
-      where: { menu_id_product_id: { menu_id: Number(id), product_id: Number(productId) } },
-    })
+    await new RemoveProductPriceUseCase(repository).execute(Number(id), Number(productId))
     return reply.status(204).send()
   })
 }

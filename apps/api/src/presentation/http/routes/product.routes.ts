@@ -1,6 +1,13 @@
 import type { FastifyInstance } from 'fastify'
 import { CreateProductUseCase } from '../../../application/use-cases/product/create-product.use-case'
 import { GetProductsUseCase } from '../../../application/use-cases/product/get-products.use-case'
+import { GetProductUseCase } from '../../../application/use-cases/product/get-product.use-case'
+import { UpdateProductUseCase } from '../../../application/use-cases/product/update-product.use-case'
+import { DeleteProductUseCase } from '../../../application/use-cases/product/delete-product.use-case'
+import { GetComboItemsUseCase } from '../../../application/use-cases/product/get-combo-items.use-case'
+import { AddComboItemUseCase } from '../../../application/use-cases/product/add-combo-item.use-case'
+import { UpdateComboItemUseCase } from '../../../application/use-cases/product/update-combo-item.use-case'
+import { DeleteComboItemUseCase } from '../../../application/use-cases/product/delete-combo-item.use-case'
 import { PrismaProductRepository } from '../../../infrastructure/database/repositories/prisma-product.repository'
 import {
   createProductSchema,
@@ -22,7 +29,7 @@ export async function productRoutes(app: FastifyInstance) {
 
   app.get('/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    const product = await repository.findByIdWithDetails(Number(id))
+    const product = await new GetProductUseCase(repository).execute(Number(id))
     if (!product) return reply.status(404).send({ error: 'Product not found' })
     return product
   })
@@ -42,12 +49,12 @@ export async function productRoutes(app: FastifyInstance) {
   app.patch('/:id', { preHandler: authMiddleware }, async (request) => {
     const { id } = request.params as { id: string }
     const body = updateProductSchema.parse(request.body)
-    return repository.update(Number(id), body)
+    return new UpdateProductUseCase(repository).execute(Number(id), body)
   })
 
   app.delete('/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    await repository.delete(Number(id))
+    await new DeleteProductUseCase(repository).execute(Number(id))
     return reply.status(204).send()
   })
 
@@ -80,32 +87,28 @@ export async function productRoutes(app: FastifyInstance) {
   })
 
   // ── ComboItems ───────────────────────────────────────────────────────────
-  // Slot fijo:     { product_id: X }          → ese producto siempre incluido
-  // Slot flexible: { complement_type_id: Y }  → el cliente elige de una lista;
-  //                                             cada opción tiene linked_product_id
-  //                                             para heredar los complementos del producto elegido
 
   app.get('/:id/combo-items', { preHandler: authMiddleware }, async (request) => {
     const { id } = request.params as { id: string }
-    return repository.findComboItems(Number(id))
+    return new GetComboItemsUseCase(repository).execute(Number(id))
   })
 
   app.post('/:id/combo-items', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const body = createComboItemSchema.parse(request.body)
-    const item = await repository.addComboItem(Number(id), body)
+    const item = await new AddComboItemUseCase(repository).execute(Number(id), body)
     return reply.status(201).send(item)
   })
 
   app.patch('/:id/combo-items/:itemId', { preHandler: authMiddleware }, async (request) => {
     const { itemId } = request.params as { itemId: string }
     const body = updateComboItemSchema.parse(request.body)
-    return repository.updateComboItem(Number(itemId), body)
+    return new UpdateComboItemUseCase(repository).execute(Number(itemId), body)
   })
 
   app.delete('/:id/combo-items/:itemId', { preHandler: authMiddleware }, async (request, reply) => {
     const { itemId } = request.params as { itemId: string }
-    await repository.deleteComboItem(Number(itemId))
+    await new DeleteComboItemUseCase(repository).execute(Number(itemId))
     return reply.status(204).send()
   })
 }

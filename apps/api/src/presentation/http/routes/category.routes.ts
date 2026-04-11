@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { CreateCategoryUseCase } from '../../../application/use-cases/category/create-category.use-case'
 import { GetCategoriesUseCase } from '../../../application/use-cases/category/get-categories.use-case'
+import { UpdateCategoryUseCase } from '../../../application/use-cases/category/update-category.use-case'
+import { DeleteCategoryUseCase } from '../../../application/use-cases/category/delete-category.use-case'
 import { PrismaCategoryRepository } from '../../../infrastructure/database/repositories/prisma-category.repository'
+import { createCategorySchema, updateCategorySchema } from '../schemas/category.schema'
 import { authMiddleware } from '../middleware/auth.middleware'
-import { z } from 'zod'
-
-const createCategorySchema = z.object({ name: z.string().min(1) })
-const updateCategorySchema = z.object({ name: z.string().min(1).optional(), order: z.number().int().optional() })
 
 export async function categoryRoutes(app: FastifyInstance) {
   const repository = new PrismaCategoryRepository(app.prisma)
@@ -29,12 +28,12 @@ export async function categoryRoutes(app: FastifyInstance) {
   app.patch('/:id', { preHandler: authMiddleware }, async (request) => {
     const { id } = request.params as { id: string }
     const body = updateCategorySchema.parse(request.body)
-    return repository.update(Number(id), body)
+    return new UpdateCategoryUseCase(repository).execute(Number(id), body)
   })
 
   app.delete('/:id', { preHandler: authMiddleware }, async (request, reply) => {
     const { id } = request.params as { id: string }
-    await repository.delete(Number(id))
+    await new DeleteCategoryUseCase(repository).execute(Number(id))
     return reply.status(204).send()
   })
 }

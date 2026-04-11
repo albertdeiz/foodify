@@ -8,5 +8,9 @@ export interface Workspace {
   updated_at: Date
 }
 
+export interface WorkspaceWithMenus extends Workspace {
+  menus: Array<{ id: number; name: string }>
+}
+
 export type CreateWorkspaceInput = Pick<Workspace, 'name' | 'slug' | 'address' | 'currency'>
 export type UpdateWorkspaceInput = Partial<CreateWorkspaceInput>

@@ -3,6 +3,7 @@ import type {
   CreateProductInput,
   UpdateProductInput,
   ProductWithDetails,
+  PublicProductDetail,
   ComboItem,
   CreateComboItemInput,
   UpdateComboItemInput,
@@ -12,6 +13,7 @@ export interface IProductRepository {
   findByWorkspaceId(workspaceId: number): Promise<Product[]>
   findById(id: number): Promise<Product | null>
   findByIdWithDetails(id: number): Promise<ProductWithDetails | null>
+  findPublicByIdInWorkspace(productId: number, workspaceId: number): Promise<PublicProductDetail | null>
   findByCategoryId(categoryId: number): Promise<Product[]>
   create(input: CreateProductInput): Promise<Product>
   update(id: number, input: UpdateProductInput): Promise<Product>

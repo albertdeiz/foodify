@@ -29,6 +29,27 @@ export interface ProductWithDetails extends Product {
   combo_items: ComboItem[]
 }
 
+// Public-facing product detail: combo item products include their complement types
+export interface PublicComboItemProduct {
+  id: number
+  name: string
+  description: string
+  price: number
+  complement_types: ComplementType[]
+}
+
+export interface PublicComboItem {
+  id: number
+  order: number
+  product_id: number | null
+  product: PublicComboItemProduct | null
+}
+
+export interface PublicProductDetail extends Product {
+  complement_types: ComplementType[]
+  combo_items: PublicComboItem[]
+}
+
 export type CreateProductInput = Pick<Product, 'name' | 'description' | 'price' | 'workspace_id'> & {
   image_url?: string
   type?: ProductType

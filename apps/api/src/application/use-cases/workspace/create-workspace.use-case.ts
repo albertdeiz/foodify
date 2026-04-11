@@ -5,6 +5,7 @@ interface CreateWorkspaceInput {
   name: string
   slug: string
   address: string
+  currency: string
   userId: number
 }
 

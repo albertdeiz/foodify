@@ -3,6 +3,7 @@ import type { IProductRepository } from '../../../domain/repositories/product.re
 import type {
   Product,
   ProductWithDetails,
+  PublicProductDetail,
   CreateProductInput,
   UpdateProductInput,
   ComboItem,
@@ -55,6 +56,70 @@ export class PrismaProductRepository implements IProductRepository {
     const raw = await this.prisma.product.findUnique({ where: { id }, include: withDetails })
     if (!raw) return null
     return mapDetails(raw)
+  }
+
+  async findPublicByIdInWorkspace(productId: number, workspaceId: number): Promise<PublicProductDetail | null> {
+    const raw = await this.prisma.product.findFirst({
+      where: { id: productId, workspace_id: workspaceId },
+      include: {
+        product_product_complement_types: {
+          include: {
+            product_complement_type: {
+              include: {
+                product_complements: {
+                  where: { is_disabled: false },
+                  orderBy: { id: 'asc' },
+                },
+              },
+            },
+          },
+        },
+        combo_items: {
+          orderBy: { order: 'asc' },
+          include: {
+            product: {
+              include: {
+                product_product_complement_types: {
+                  include: {
+                    product_complement_type: {
+                      include: {
+                        product_complements: {
+                          where: { is_disabled: false },
+                          orderBy: { id: 'asc' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    if (!raw) return null
+
+    const { product_product_complement_types, combo_items, ...base } = raw
+    return {
+      ...base,
+      complement_types: product_product_complement_types.map((r) => r.product_complement_type),
+      combo_items: combo_items.map((ci) => ({
+        id: ci.id,
+        order: ci.order,
+        product_id: ci.product_id,
+        product: ci.product
+          ? {
+              id: ci.product.id,
+              name: ci.product.name,
+              description: ci.product.description,
+              price: ci.product.price,
+              complement_types: ci.product.product_product_complement_types.map(
+                (r) => r.product_complement_type,
+              ),
+            }
+          : null,
+      })),
+    } as PublicProductDetail
   }
 
   async findByCategoryId(categoryId: number): Promise<Product[]> {

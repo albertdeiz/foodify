@@ -79,6 +79,58 @@ export class PrismaMenuRepository implements IMenuRepository {
     await this.prisma.menu.delete({ where: { id } })
   }
 
+  async findPublicByIdInWorkspace(menuId: number, workspaceId: number): Promise<MenuWithContent | null> {
+    const raw = await this.prisma.menu.findFirst({
+      where: { id: menuId, workspace_id: workspaceId, is_active: true },
+      include: {
+        menu_categories: {
+          orderBy: { order: 'asc' },
+          include: {
+            category: {
+              include: {
+                product_categories: {
+                  orderBy: { order: 'asc' },
+                  include: { product: true },
+                },
+              },
+            },
+          },
+        },
+        menu_product_prices: true,
+      },
+    })
+    if (!raw) return null
+
+    const priceMap = new Map(raw.menu_product_prices.map((p) => [p.product_id, p.price]))
+
+    return {
+      id: raw.id,
+      name: raw.name,
+      is_active: raw.is_active,
+      workspace_id: raw.workspace_id,
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
+      categories: raw.menu_categories.map((mc) => ({
+        id: mc.category.id,
+        name: mc.category.name,
+        order: mc.order,
+        products: mc.category.product_categories
+          .filter((pc) => pc.product.is_available)
+          .map((pc) => ({
+            id: pc.product.id,
+            name: pc.product.name,
+            description: pc.product.description,
+            base_price: pc.product.price,
+            price: priceMap.get(pc.product.id) ?? pc.product.price,
+            type: pc.product.type,
+            is_available: pc.product.is_available,
+            content: pc.product.content,
+            image_url: pc.product.image_url,
+          })),
+      })),
+    }
+  }
+
   async assignCategory(menuId: number, categoryId: number, order = 0): Promise<void> {
     await this.prisma.menuCategory.upsert({
       where: { menu_id_category_id: { menu_id: menuId, category_id: categoryId } },
@@ -90,6 +142,20 @@ export class PrismaMenuRepository implements IMenuRepository {
   async removeCategory(menuId: number, categoryId: number): Promise<void> {
     await this.prisma.menuCategory.delete({
       where: { menu_id_category_id: { menu_id: menuId, category_id: categoryId } },
+    })
+  }
+
+  async setProductPrice(menuId: number, productId: number, price: number): Promise<void> {
+    await this.prisma.menuProductPrice.upsert({
+      where: { menu_id_product_id: { menu_id: menuId, product_id: productId } },
+      create: { menu_id: menuId, product_id: productId, price },
+      update: { price },
+    })
+  }
+
+  async removeProductPrice(menuId: number, productId: number): Promise<void> {
+    await this.prisma.menuProductPrice.delete({
+      where: { menu_id_product_id: { menu_id: menuId, product_id: productId } },
     })
   }
 }

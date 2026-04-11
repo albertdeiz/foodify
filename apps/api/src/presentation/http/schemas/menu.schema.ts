@@ -9,5 +9,9 @@ export const updateMenuSchema = z.object({
   is_active: z.boolean().optional(),
 })
 
+export const menuProductPriceSchema = z.object({
+  price: z.number().int().min(0),
+})
+
 export type CreateMenuInput = z.infer<typeof createMenuSchema>
 export type UpdateMenuInput = z.infer<typeof updateMenuSchema>
